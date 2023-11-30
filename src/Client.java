@@ -6,10 +6,10 @@ import java.net.UnknownHostException;
 public class Client {
 
     public static void main (String args []) {
-        try (Socket socket = new Socket("localhost", 6834)) {
+        try (Socket socket = new Socket("localhost", 7169)) {
             PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
-            writer.printf("1000");
-            writer.flush();
+            writer.println("8888");
+            writer.println("Server1");
             writer.close();
         } catch (UnknownHostException e) {
             e.printStackTrace();
