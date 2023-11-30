@@ -16,6 +16,8 @@ public class WorkScheduler {
 
     /*Here are stored the arrival times of last packets which arrived for each server.
     The first cell hold times for Server1, the second for Server2 and the third for Server3.
+    When WorkScheduler starts assigns -1 to all cells in main method,
+    so if scheduler in run method notice a cell contains -1 it knows no packet for the corresponding server has written its arrival time.
      */
     private static long timesOfArrivalOfPackets [] = new long [3];
 
@@ -74,7 +76,8 @@ public class WorkScheduler {
                     }
                     long counterForThisPacket;
                     long timeOfArrivalOfThisPacket;
-                    int tokensWillBeUsed;
+                    int tokensWillBeUsed = 0;
+                    //If it is the first packet it came execute
                     if (timesOfArrivalOfPackets[0] == -1) {
                         synchronized(Worker.class) {
                             //Writes the arrival time of this packet
@@ -90,64 +93,32 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        if (counterForThisPacket > packetsCounter[0]) {
-                            if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
-                                tokensWillBeUsed = buckets[0];
-                                synchronized (Worker.class) {
-                                    buckets[0] -= buckets[0];
-                                }
-                                try (Socket socket = new Socket("localhost", 6834)) {
-                                    PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
-                                    writer.println(argumentForServer);
-                                    writer.close();
-                                } catch (UnknownHostException e) {
-                                    e.printStackTrace();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                try {
-                                    Thread.sleep(2500);
-                                } catch (InterruptedException e) {
-                                    System.out.println ("Another thread interrupted this.");
-                                }
-                                synchronized (Worker.class) {
-                                    buckets[0] += tokensWillBeUsed;
-                                }
-                            } //If a new packet arrived within 10 seconds else is executed.
-                            else {
-
-                            }
-                        } else if (counterForThisPacket == packetsCounter[0]) {
-                            if (arrivedFirst) {
-                                tokensWillBeUsed = buckets[0] / 2;
-                            } /*If arrivedFirst is false it means program is in thread of second packet arrived at most 10 milliseconds after previous.
-                                If in this case write tokensWillBeUsed = buckets[0] / 2 it would assign the half of the half of the tokens I should assign,
-                                because the first half are assigned to first packet. Thus, the other half remain.
-                                If I do tokensWillBeUsed = buckets[0] / 2 I am going to assign the half of the half.
-                              */
-                            else {
-                                tokensWillBeUsed = buckets[0];
-                            }
-                            synchronized (Worker.class) {
-                                buckets[0] -= tokensWillBeUsed;
-                            }
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
+                        try (Socket socket = new Socket("localhost", 6834)) {
+                            PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
+                            writer.println(argumentForServer);
+                            writer.close();
+                        } catch (UnknownHostException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    }
-                    tokensWillBeUsed = buckets[0];
-                    synchronized (Worker.class) {
-                        buckets[0] -= buckets[0];
-                    }
-                    try (Socket socket = new Socket("localhost", 6834)) {
-                        PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
-                        writer.println(argumentForServer);
-                        writer.close();
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    synchronized (Worker.class) {
-                        buckets[0] += tokensWillBeUsed;
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+                            System.out.println ("Another thread interrupted this.");
+                        }
+                        synchronized (Worker.class) {
+                            buckets[0] += tokensWillBeUsed;
+                        }
+                    } else if (timesOfArrivalOfPackets[0] > -1) {
+                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        synchronized (Worker.class) {
+                            packetsCounter[0]++;
+                            counterForThisPacket = packetsCounter[0];
+                        }
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
+
                     }
                 }
             } catch (IOException e) {
@@ -155,6 +126,31 @@ public class WorkScheduler {
             }
         }
 
+        private int assignTokens (long timeOfArrivalOfThisPacket, long counterForThisPacket) {
+            int tokensWillBeUsed;
+            if (counterForThisPacket > packetsCounter[0]) {
+                if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
+                    tokensWillBeUsed = buckets[0];
+                } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
+                else {
+                    tokensWillBeUsed = buckets[0] / 2;
+                }
+            } /*If no new packet came this block is executed.
+                            It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
+                            anyway it is going to assign to buckets[0] all available tokens,
+                            because if previous packet arrived within 10 milliseconds before this packet arrived it took already its tokens.
+                          */
+            else if (counterForThisPacket == packetsCounter[0]) {
+                tokensWillBeUsed = buckets[0];
+                synchronized (Worker.class) {
+                    buckets[0] -= tokensWillBeUsed;
+                }
+            } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
+            else {
+                tokensWillBeUsed = 0;
+            }
+            return tokensWillBeUsed;
+        }
     }
 
 }
