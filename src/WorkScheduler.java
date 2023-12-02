@@ -39,6 +39,10 @@ public class WorkScheduler {
         timesOfArrivalOfPackets[1] = -1;
         timesOfArrivalOfPackets[2] = -1;
 
+        packetsCounter[0] = 0;
+        packetsCounter[1] = 0;
+        packetsCounter[2] = 0;
+
         try (ServerSocket server = new ServerSocket((7169))) {
             while (true) {
                 //Listens to requests for connection from client.
@@ -79,15 +83,8 @@ public class WorkScheduler {
                     int tokensWillBeUsed = 0;
                     //If it is the first packet it came execute
                     if (timesOfArrivalOfPackets[0] == -1) {
-                        synchronized(Worker.class) {
-                            //Writes the arrival time of this packet
-                            timesOfArrivalOfPackets[0] = System.currentTimeMillis();
-                            //Saves timesOfArrivalOfPackets[0] because if a new packet come it is going to be changed.
-                            timeOfArrivalOfThisPacket = timesOfArrivalOfPackets[0];
-                            packetsCounter[0] = 1;
-                            //It needs to save it because some other thread may be created and increase packetsCounter[0]
-                            counterForThisPacket = packetsCounter[0];
-                        }
+                        timeOfArrivalOfThisPacket = writeTimeOfArrivalOfNewPacket(System.currentTimeMillis());
+                        counterForThisPacket = increasePacketCounter();
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
@@ -113,12 +110,14 @@ public class WorkScheduler {
                         }
                     } else if (timesOfArrivalOfPackets[0] > -1) {
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
-                        synchronized (Worker.class) {
-                            packetsCounter[0]++;
-                            counterForThisPacket = packetsCounter[0];
-                        }
+                        counterForThisPacket = increasePacketCounter();
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
-
+                        writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -136,21 +135,38 @@ public class WorkScheduler {
                     tokensWillBeUsed = buckets[0] / 2;
                 }
             } /*If no new packet came this block is executed.
-                            It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
-                            anyway it is going to assign to buckets[0] all available tokens,
-                            because if previous packet arrived within 10 milliseconds before this packet arrived it took already its tokens.
-                          */
+                It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
+                anyway it is going to assign to buckets[0] all available tokens,
+                because if previous packet arrived within 10 milliseconds before this packet arrived it took already its tokens.
+                */
             else if (counterForThisPacket == packetsCounter[0]) {
                 tokensWillBeUsed = buckets[0];
-                synchronized (Worker.class) {
-                    buckets[0] -= tokensWillBeUsed;
-                }
             } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
             else {
                 tokensWillBeUsed = 0;
             }
+            synchronized (Worker.class) {
+                buckets[0] -= tokensWillBeUsed;
+            }
             return tokensWillBeUsed;
         }
+
+        /*Return packetsCounter[index] a method variable can store this value.
+         If it didn't return it, packetsCounter[cell] could be changed by another thread and method variable wouldn't store wright value.
+         */
+        private static synchronized long increasePacketCounter () {
+            packetsCounter[0]++;
+            return packetsCounter[0];
+        }
+
+        /*Return timesOfArrivalOfPackets[index] a method variable can store this value.
+         If it didn't return it, timesOfArrivalOfPackets[cell] could be changed by another thread and method variable wouldn't store wright value.
+         */
+        private static synchronized long writeTimeOfArrivalOfNewPacket (long timeOfArrivalOfThisPacket) {
+            timesOfArrivalOfPackets[0] = timeOfArrivalOfThisPacket;
+            return timesOfArrivalOfPackets[0];
+        }
+
     }
 
 }
