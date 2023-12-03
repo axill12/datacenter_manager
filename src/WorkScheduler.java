@@ -57,6 +57,13 @@ public class WorkScheduler {
 
     public static class Worker implements Runnable {
 
+        /*If all tokens of a server are assigned to this request this variable is true.
+          If all tokens are assigned and run's thread didn't wait to check if another request will come in short interval,
+          thread should wait this short interval and then send request to server. That is why is necessary to know if all tokens are assigned.
+          This is instance variable because if it was a static method it could be changed by some other thread before this thread checks it.
+        */
+        private boolean areAllTokensAssigned;
+
         private final Socket client;
 
         public Worker (Socket client) {
@@ -91,28 +98,23 @@ public class WorkScheduler {
                             e.printStackTrace();
                         }
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
-                        try (Socket socket = new Socket("localhost", 6834)) {
-                            PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
-                            writer.println(argumentForServer);
-                            writer.close();
-                        } catch (UnknownHostException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        sendRequest(6834, argumentForServer);
                         try {
                             Thread.sleep(2500);
                         } catch (InterruptedException e) {
                             System.out.println ("Another thread interrupted this.");
                         }
-                        synchronized (Worker.class) {
-                            buckets[0] += tokensWillBeUsed;
-                        }
+                        releaseTokens(tokensWillBeUsed);
                     } else if (timesOfArrivalOfPackets[0] > -1) {
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
                         counterForThisPacket = increasePacketCounter();
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
+                        if (!areAllTokensAssigned) {
+                            sendRequest(6834, argumentForServer);
+                            releaseTokens(tokensWillBeUsed);
+                            return;
+                        }
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
@@ -130,9 +132,11 @@ public class WorkScheduler {
             if (counterForThisPacket > packetsCounter[0]) {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
+                    areAllTokensAssigned = true;
                 } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
+                    areAllTokensAssigned = false;
                 }
             } /*If no new packet came this block is executed.
                 It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
@@ -141,6 +145,7 @@ public class WorkScheduler {
                 */
             else if (counterForThisPacket == packetsCounter[0]) {
                 tokensWillBeUsed = buckets[0];
+                areAllTokensAssigned = true;
             } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
             else {
                 tokensWillBeUsed = 0;
@@ -165,6 +170,24 @@ public class WorkScheduler {
         private static synchronized long writeTimeOfArrivalOfNewPacket (long timeOfArrivalOfThisPacket) {
             timesOfArrivalOfPackets[0] = timeOfArrivalOfThisPacket;
             return timesOfArrivalOfPackets[0];
+        }
+
+        private static void sendRequest (int port, String argumentForServer) {
+            try (Socket socket = new Socket("localhost", port)) {
+                PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
+                writer.println(argumentForServer);
+                writer.close();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void releaseTokens (int tokensWillBeUsed) {
+            synchronized (Worker.class) {
+                buckets[0] += tokensWillBeUsed;
+            }
         }
 
     }
