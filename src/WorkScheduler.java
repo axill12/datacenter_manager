@@ -99,11 +99,7 @@ public class WorkScheduler {
                         }
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
-                        try {
-                            Thread.sleep(2500);
-                        } catch (InterruptedException e) {
-                            System.out.println ("Another thread interrupted this.");
-                        }
+                        waitServerToFinishThisRequest();
                         releaseTokens(tokensWillBeUsed);
                     } else if (timesOfArrivalOfPackets[0] > -1) {
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
@@ -112,6 +108,7 @@ public class WorkScheduler {
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         if (!areAllTokensAssigned) {
                             sendRequest(6834, argumentForServer);
+                            waitServerToFinishThisRequest();
                             releaseTokens(tokensWillBeUsed);
                             return;
                         }
@@ -120,6 +117,10 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
+                        sendRequest(6834, argumentForServer);
+                        waitServerToFinishThisRequest();
+                        releaseTokens(tokensWillBeUsed);
                     }
                 }
             } catch (IOException e) {
@@ -160,8 +161,7 @@ public class WorkScheduler {
          If it didn't return it, packetsCounter[cell] could be changed by another thread and method variable wouldn't store wright value.
          */
         private static synchronized long increasePacketCounter () {
-            packetsCounter[0]++;
-            return packetsCounter[0];
+            return ++packetsCounter[0];
         }
 
         /*Return timesOfArrivalOfPackets[index] a method variable can store this value.
@@ -187,6 +187,15 @@ public class WorkScheduler {
         private static void releaseTokens (int tokensWillBeUsed) {
             synchronized (Worker.class) {
                 buckets[0] += tokensWillBeUsed;
+            }
+        }
+
+        //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
+        private static void waitServerToFinishThisRequest () {
+            try {
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {
+                System.out.println ("Another thread interrupted this.");
             }
         }
 
