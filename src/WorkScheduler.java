@@ -21,10 +21,6 @@ public class WorkScheduler {
      */
     private static long timesOfArrivalOfPackets [] = new long [3];
 
-    /*If it is the first of two packets which arrived with at most 10 milliseconds difference it is true, if it is the second one is false.
-     */
-    private static boolean arrivedFirst = true;
-
     /*Counts the packets arrived per server because if subtraction is zero,
     it may be because no packet arrived and the last request subtract its arrival time with its arrival time.
      */
@@ -55,7 +51,7 @@ public class WorkScheduler {
         }
     }
 
-    public static class Worker implements Runnable {
+    private static class Worker implements Runnable {
 
         /*If all tokens of a server are assigned to this request this variable is true.
           If all tokens are assigned and run's thread didn't wait to check if another request will come in short interval,
@@ -91,6 +87,7 @@ public class WorkScheduler {
                     //If it is the first packet it came execute
                     if (timesOfArrivalOfPackets[0] == -1) {
                         timeOfArrivalOfThisPacket = writeTimeOfArrivalOfNewPacket(System.currentTimeMillis());
+                        System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
                         try {
                             Thread.sleep(10);
@@ -103,6 +100,7 @@ public class WorkScheduler {
                         releaseTokens(tokensWillBeUsed);
                     } else if (timesOfArrivalOfPackets[0] > -1) {
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
@@ -134,10 +132,12 @@ public class WorkScheduler {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
                     areAllTokensAssigned = true;
+                    System.out.println (Thread.currentThread().threadId() + " in if if " + "tokens that are assigned: " + tokensWillBeUsed);
                 } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
                     areAllTokensAssigned = false;
+                    System.out.println (Thread.currentThread().threadId() + " in if else " + "tokens that are assigned: " + tokensWillBeUsed);
                 }
             } /*If no new packet came this block is executed.
                 It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
@@ -147,9 +147,11 @@ public class WorkScheduler {
             else if (counterForThisPacket == packetsCounter[0]) {
                 tokensWillBeUsed = buckets[0];
                 areAllTokensAssigned = true;
+                System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed);
             } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
             else {
                 tokensWillBeUsed = 0;
+                System.out.println(Thread.currentThread().threadId() + " in else");
             }
             synchronized (Worker.class) {
                 buckets[0] -= tokensWillBeUsed;

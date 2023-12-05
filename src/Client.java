@@ -6,16 +6,26 @@ import java.net.UnknownHostException;
 public class Client {
 
     public static void main (String args []) {
-        try (Socket socket = new Socket("localhost", 7169)) {
-            PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
-            writer.println("8888");
-            writer.println("Server1");
-            writer.close();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        Worker worker = new Worker ();
+        new Thread(worker).start();
+        new Thread(worker).start();
+    }
+
+    private static class Worker implements Runnable {
+
+        public void run () {
+            try (Socket socket = new Socket("localhost", 7169)) {
+                PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
+                writer.println("8888");
+                writer.println("Server1");
+                writer.close();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
     }
 
 }
