@@ -26,6 +26,11 @@ public class WorkScheduler {
      */
     private static long packetsCounter[] = new long [3];
 
+    /*If it is the first packet is true. Without the first two threads may enter both at if (timesOfArrivalOfPackets[0] == -1)
+      because timesOfArrivalOfPackets[0] didn't have time to change.
+    */
+    private static boolean isFirstPacket = true;
+
     public static void main (String args []) {
         buckets[0] = 10;
         buckets[1] = 10;
@@ -84,11 +89,23 @@ public class WorkScheduler {
                     long counterForThisPacket;
                     long timeOfArrivalOfThisPacket;
                     int tokensWillBeUsed = 0;
+                    boolean isFP;
+
+                    synchronized (Worker.class) {
+                        isFP = isFirstPacket;
+                        //It changes it, so the next packet will know it is not the first packet.
+                        if (isFP) {
+                            isFirstPacket = false;
+                        }
+                    }
+
                     //If it is the first packet it came execute
-                    if (timesOfArrivalOfPackets[0] == -1) {
+                    if (isFP) {
+                        System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
                         timeOfArrivalOfThisPacket = writeTimeOfArrivalOfNewPacket(System.currentTimeMillis());
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
+                        System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
@@ -98,10 +115,12 @@ public class WorkScheduler {
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         releaseTokens(tokensWillBeUsed);
-                    } else if (timesOfArrivalOfPackets[0] > -1) {
+                    } else {
+                        System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
+                        System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         if (!areAllTokensAssigned) {
