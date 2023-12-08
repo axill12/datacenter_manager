@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WorkScheduler {
 
@@ -30,6 +32,8 @@ public class WorkScheduler {
       because timesOfArrivalOfPackets[0] didn't have time to change.
     */
     private static boolean isFirstPacket = true;
+
+    private static boolean isInPacketsCounterLock = false;
 
     public static void main (String args []) {
         buckets[0] = 10;
@@ -90,6 +94,8 @@ public class WorkScheduler {
                     long timeOfArrivalOfThisPacket;
                     int tokensWillBeUsed = 0;
                     boolean isFP;
+                    ReentrantLock packetsCounterLock = new ReentrantLock();
+                    Condition isPacketsCounterZero = packetsCounterLock.newCondition();
 
                     synchronized (Worker.class) {
                         isFP = isFirstPacket;
@@ -99,13 +105,20 @@ public class WorkScheduler {
                         }
                     }
 
-                    //If it is the first packet it came execute
+                    //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
                         timeOfArrivalOfThisPacket = writeTimeOfArrivalOfNewPacket(System.currentTimeMillis());
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
+
+                        try {
+                            isPacketsCounterZero.signal();
+                        } catch (IllegalMonitorStateException e) {
+                            System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
+                        }
+
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
@@ -119,6 +132,28 @@ public class WorkScheduler {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
+                        /*If lock and condition are not used, then the second thread that serves the second request,
+                          reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
+                          Thus second thread's counterForThisPacket equals 1 and first's counterForThisPacket equals 2,
+                          because it increases after second thread's, which is abnormal.
+                        */
+                        if (packetsCounter[0] == 0) {
+                            try {
+                                packetsCounterLock.lock();
+                                isInPacketsCounterLock = true;
+                                while (packetsCounter[0] == 0) {
+                                    isPacketsCounterZero.await();
+                                }
+                            } catch(InterruptedException e) {
+                                e.printStackTrace();
+                            } finally {
+                                try {
+                                    packetsCounterLock.unlock();
+                                } catch (IllegalMonitorStateException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
