@@ -35,6 +35,10 @@ public class WorkScheduler {
 
     private static boolean isInPacketsCounterLock = false;
 
+    private static ReentrantLock packetsCounterLock = new ReentrantLock();
+
+    private static Condition isPacketsCounterZero = packetsCounterLock.newCondition();
+
     public static void main (String args []) {
         buckets[0] = 10;
         buckets[1] = 10;
@@ -94,8 +98,6 @@ public class WorkScheduler {
                     long timeOfArrivalOfThisPacket;
                     int tokensWillBeUsed = 0;
                     boolean isFP;
-                    ReentrantLock packetsCounterLock = new ReentrantLock();
-                    Condition isPacketsCounterZero = packetsCounterLock.newCondition();
 
                     synchronized (Worker.class) {
                         isFP = isFirstPacket;
@@ -113,10 +115,23 @@ public class WorkScheduler {
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
 
-                        try {
-                            isPacketsCounterZero.signal();
-                        } catch (IllegalMonitorStateException e) {
-                            System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
+                        /*If isPacketsCounterZero.signal() exists without this loop sometimes this command is executed before isPacketsCounterZero.await().
+                          When is executed this thread just continues, but the other stays stuck in lock, specifically in packetsCounterLock.lock().
+                          This loop executes until packetsCounter[0] reach 2, which means the other thread executed increasePacketCounter().
+                         */
+                        while (isInPacketsCounterLock == false && packetsCounter[0] == 2) {
+                            System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
+                            try {
+                                try {
+                                    Thread.sleep(2);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                isPacketsCounterZero.signal();
+                                System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
+                            } catch (IllegalMonitorStateException e) {
+                                System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
+                            }
                         }
 
                         try {
@@ -139,9 +154,11 @@ public class WorkScheduler {
                         */
                         if (packetsCounter[0] == 0) {
                             try {
-                                packetsCounterLock.lock();
                                 isInPacketsCounterLock = true;
+                                System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
+                                packetsCounterLock.lock();
                                 while (packetsCounter[0] == 0) {
+                                    System.out.println (Thread.currentThread().threadId() + " In while in lock");
                                     isPacketsCounterZero.await();
                                 }
                             } catch(InterruptedException e) {
