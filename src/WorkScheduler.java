@@ -122,11 +122,6 @@ public class WorkScheduler {
                         while (isInPacketsCounterLock == false && packetsCounter[0] == 2) {
                             System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
                             try {
-                                try {
-                                    Thread.sleep(2);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
                                 isPacketsCounterZero.signal();
                                 System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
                             } catch (IllegalMonitorStateException e) {
