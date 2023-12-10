@@ -28,6 +28,12 @@ public class WorkScheduler {
      */
     private static long packetsCounter[] = new long [3];
 
+    /*If all tokens of a server are assigned to this request this variable is true.
+          If all tokens are assigned and run's thread didn't wait to check if another request will come in short interval,
+          thread should wait this short interval and then send request to server. That is why is necessary to know if all tokens are assigned.
+        */
+    private static boolean areAllTokensAssigned;
+
     /*If it is the first packet is true. Without the first two threads may enter both at if (timesOfArrivalOfPackets[0] == -1)
       because timesOfArrivalOfPackets[0] didn't have time to change.
     */
@@ -65,13 +71,6 @@ public class WorkScheduler {
     }
 
     private static class Worker implements Runnable {
-
-        /*If all tokens of a server are assigned to this request this variable is true.
-          If all tokens are assigned and run's thread didn't wait to check if another request will come in short interval,
-          thread should wait this short interval and then send request to server. That is why is necessary to know if all tokens are assigned.
-          This is instance variable because if it was a static method it could be changed by some other thread before this thread checks it.
-        */
-        private boolean areAllTokensAssigned;
 
         private final Socket client;
 
@@ -171,6 +170,7 @@ public class WorkScheduler {
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         if (!areAllTokensAssigned) {
+                            System.out.println (Thread.currentThread().threadId() + " in if (!areAllTokensAssigned)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
                             releaseTokens(tokensWillBeUsed);
@@ -256,6 +256,7 @@ public class WorkScheduler {
             synchronized (Worker.class) {
                 buckets[0] += tokensWillBeUsed;
             }
+            areAllTokensAssigned = false;
         }
 
         //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
