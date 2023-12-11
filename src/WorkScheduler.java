@@ -194,16 +194,18 @@ public class WorkScheduler {
 
         private int assignTokens (long timeOfArrivalOfThisPacket, long counterForThisPacket) {
             int tokensWillBeUsed;
-            if (counterForThisPacket > packetsCounter[0]) {
+            if (counterForThisPacket < packetsCounter[0]) {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
+                    reduceTokens(tokensWillBeUsed);
                     areAllTokensAssigned = true;
-                    System.out.println (Thread.currentThread().threadId() + " in if if " + "tokens that are assigned: " + tokensWillBeUsed);
+                    System.out.println (Thread.currentThread().threadId() + " in if if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
+                    reduceTokens(tokensWillBeUsed);
                     areAllTokensAssigned = false;
-                    System.out.println (Thread.currentThread().threadId() + " in if else " + "tokens that are assigned: " + tokensWillBeUsed);
+                    System.out.println (Thread.currentThread().threadId() + " in if else " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 }
             } /*If no new packet came this block is executed.
                 It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
@@ -211,16 +213,23 @@ public class WorkScheduler {
                 because if previous packet arrived within 10 milliseconds before this packet arrived it took already its tokens.
                 */
             else if (counterForThisPacket == packetsCounter[0]) {
-                tokensWillBeUsed = buckets[0];
-                areAllTokensAssigned = true;
-                System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed);
+                if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
+                    tokensWillBeUsed = buckets[0];
+                    reduceTokens(tokensWillBeUsed);
+                    areAllTokensAssigned = true;
+                    System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
+                } else {
+                    tokensWillBeUsed = buckets[0] / 2;
+                    reduceTokens(tokensWillBeUsed);
+                    areAllTokensAssigned = true;
+                    System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
+                }
+
             } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
             else {
+                System.out.println(Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket + " packetsCounter[0]: " + packetsCounter[0]);
                 tokensWillBeUsed = 0;
                 System.out.println(Thread.currentThread().threadId() + " in else");
-            }
-            synchronized (Worker.class) {
-                buckets[0] -= tokensWillBeUsed;
             }
             return tokensWillBeUsed;
         }
@@ -266,6 +275,10 @@ public class WorkScheduler {
             } catch (InterruptedException e) {
                 System.out.println ("Another thread interrupted this.");
             }
+        }
+
+        private static synchronized void reduceTokens (int tokensWillBeUsed) {
+            buckets[0] -= tokensWillBeUsed;
         }
 
     }
