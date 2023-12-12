@@ -45,6 +45,12 @@ public class WorkScheduler {
 
     private static Condition isPacketsCounterZero = packetsCounterLock.newCondition();
 
+    /*These are the tokens are going to be used totally by two packets when they arrive with at most 10 millisecond difference.
+    Without knowing the initial token's number the two packets should use totally, it would assign the half of tokens remained after first packet took the initial half tokens.
+    Thus second packet would use the half of the half of initial tokens, while we want to take the half.
+     */
+    private static int tokensForTwoPackets;
+
     public static void main (String args []) {
         buckets[0] = 10;
         buckets[1] = 10;
@@ -112,13 +118,13 @@ public class WorkScheduler {
                         timeOfArrivalOfThisPacket = writeTimeOfArrivalOfNewPacket(System.currentTimeMillis());
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
-                        System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
+                        System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
 
                         /*If isPacketsCounterZero.signal() exists without this loop sometimes this command is executed before isPacketsCounterZero.await().
                           When is executed this thread just continues, but the other stays stuck in lock, specifically in packetsCounterLock.lock().
                           This loop executes until packetsCounter[0] reach 2, which means the other thread executed increasePacketCounter().
                          */
-                        while (isInPacketsCounterLock == false && packetsCounter[0] == 2) {
+                        while (isInPacketsCounterLock == false && packetsCounter[0] <= 2) {
                             System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
                             try {
                                 isPacketsCounterZero.signal();
@@ -126,6 +132,12 @@ public class WorkScheduler {
                             } catch (IllegalMonitorStateException e) {
                                 System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
                             }
+                            //Without break for some reason does not exit
+                            if (packetsCounter[0] == 2) {
+                                System.out.println(Thread.currentThread().threadId() + " in if (packetsCounter[0] == 2) just before break");
+                                break;
+                            }
+                            System.out.println(Thread.currentThread().threadId() + " packetsCounter[0]: " + packetsCounter[0]);
                         }
 
                         try {
@@ -136,7 +148,7 @@ public class WorkScheduler {
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
-                        releaseTokens(tokensWillBeUsed);
+                        changeNumberOfAvailableTokens(tokensWillBeUsed);
                     } else {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
@@ -166,14 +178,14 @@ public class WorkScheduler {
                             }
                         }
                         counterForThisPacket = increasePacketCounter();
-                        System.out.println (Thread.currentThread().threadId() + " counter for this packet: " + counterForThisPacket);
+                        System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         if (!areAllTokensAssigned) {
                             System.out.println (Thread.currentThread().threadId() + " in if (!areAllTokensAssigned)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
-                            releaseTokens(tokensWillBeUsed);
+                            changeNumberOfAvailableTokens(tokensWillBeUsed);
                             return;
                         }
                         try {
@@ -184,7 +196,7 @@ public class WorkScheduler {
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
-                        releaseTokens(tokensWillBeUsed);
+                        changeNumberOfAvailableTokens(tokensWillBeUsed);
                     }
                 }
             } catch (IOException e) {
@@ -197,13 +209,14 @@ public class WorkScheduler {
             if (counterForThisPacket < packetsCounter[0]) {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
-                    reduceTokens(tokensWillBeUsed);
+                    changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                     areAllTokensAssigned = true;
                     System.out.println (Thread.currentThread().threadId() + " in if if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
-                    reduceTokens(tokensWillBeUsed);
+                    tokensForTwoPackets = buckets[0];
+                    changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                     areAllTokensAssigned = false;
                     System.out.println (Thread.currentThread().threadId() + " in if else " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 }
@@ -215,12 +228,18 @@ public class WorkScheduler {
             else if (counterForThisPacket == packetsCounter[0]) {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
-                    reduceTokens(tokensWillBeUsed);
+                    changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                     areAllTokensAssigned = true;
                     System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 } else {
-                    tokensWillBeUsed = buckets[0] / 2;
-                    reduceTokens(tokensWillBeUsed);
+                    //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
+                    if (tokensForTwoPackets % 2 == 1) {
+                        tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
+                    } //If tokensForTwoPackets % 2 == 0
+                    else {
+                        tokensWillBeUsed = tokensForTwoPackets / 2;
+                    }
+                    changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                     areAllTokensAssigned = true;
                     System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 }
@@ -261,11 +280,12 @@ public class WorkScheduler {
             }
         }
 
-        private static void releaseTokens (int tokensWillBeUsed) {
-            synchronized (Worker.class) {
-                buckets[0] += tokensWillBeUsed;
+        //If it is used for binding tokens to a request tokensWillBeUsed should be the number of tokens that are necessary to bind with minus sign to subtract tokens.
+        private static synchronized void changeNumberOfAvailableTokens (int tokensWillBeUsed) {
+            buckets[0] += tokensWillBeUsed;
+            if (tokensWillBeUsed > 0) {
+                areAllTokensAssigned = false;
             }
-            areAllTokensAssigned = false;
         }
 
         //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
@@ -275,10 +295,6 @@ public class WorkScheduler {
             } catch (InterruptedException e) {
                 System.out.println ("Another thread interrupted this.");
             }
-        }
-
-        private static synchronized void reduceTokens (int tokensWillBeUsed) {
-            buckets[0] -= tokensWillBeUsed;
         }
 
     }
