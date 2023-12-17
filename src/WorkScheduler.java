@@ -28,18 +28,12 @@ public class WorkScheduler {
      */
     private static long packetsCounter[] = new long [3];
 
-    /*If all tokens of a server are assigned to this request this variable is true.
-          If all tokens are assigned and run's thread didn't wait to check if another request will come in short interval,
-          thread should wait this short interval and then send request to server. That is why is necessary to know if all tokens are assigned.
-        */
-    private static boolean areAllTokensAssigned;
-
     /*If it is the first packet is true. Without the first two threads may enter both at if (timesOfArrivalOfPackets[0] == -1)
       because timesOfArrivalOfPackets[0] didn't have time to change.
     */
     private static boolean isFirstPacket = true;
 
-    private static boolean isInPacketsCounterLock = false;
+    private static volatile boolean isInPacketsCounterLock = false;
 
     private static ReentrantLock packetsCounterLock = new ReentrantLock();
 
@@ -50,6 +44,9 @@ public class WorkScheduler {
     Thus second packet would use the half of the half of initial tokens, while we want to take the half.
      */
     private static int tokensForTwoPackets;
+
+    //This variable declares if it is the first of two requests that arrived with at most 10 milliseconds difference.
+    private static boolean isFirstOfTwoPackets = true;
 
     public static void main (String args []) {
         buckets[0] = 10;
@@ -181,8 +178,8 @@ public class WorkScheduler {
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
-                        if (!areAllTokensAssigned) {
-                            System.out.println (Thread.currentThread().threadId() + " in if (!areAllTokensAssigned)");
+                        if (buckets[0] > 0) {
+                            System.out.println (Thread.currentThread().threadId() + " in if if (buckets[0] > 0)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
                             changeNumberOfAvailableTokens(tokensWillBeUsed);
@@ -192,7 +189,7 @@ public class WorkScheduler {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
-                        }
+                        } //Some tokens should be free. Thus, they are assigned.
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
@@ -210,40 +207,55 @@ public class WorkScheduler {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
                     changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                    areAllTokensAssigned = true;
                     System.out.println (Thread.currentThread().threadId() + " in if if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
                     tokensForTwoPackets = buckets[0];
+                    isFirstOfTwoPackets = true;
                     changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                    areAllTokensAssigned = false;
                     System.out.println (Thread.currentThread().threadId() + " in if else " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 }
-            } /*If no new packet came this block is executed.
-                It doesn't matter if the previous packet arrived within 10 milliseconds before this packet arrived,
-                anyway it is going to assign to buckets[0] all available tokens,
-                because if previous packet arrived within 10 milliseconds before this packet arrived it took already its tokens.
-                */
+            }
             else if (counterForThisPacket == packetsCounter[0]) {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
                     tokensWillBeUsed = buckets[0];
-                    changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                    areAllTokensAssigned = true;
-                    System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 } else {
                     //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
                     if (tokensForTwoPackets % 2 == 1) {
+                        if (tokensForTwoPackets == 0) {
+                            tokensWillBeUsed = buckets[0] / 2;
+                            tokensForTwoPackets = buckets[0];
+                            /*It is assigned false,
+                              so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
+                            */
+                            isFirstOfTwoPackets = false;
+                            changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
+                        } //If tokensForTwoPackets > 0
+                        else {
+                            if (isFirstOfTwoPackets) {
+                                tokensWillBeUsed = buckets[0] / 2;
+                                tokensForTwoPackets = buckets[0];
+                                /*It is assigned false,
+                                  so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
+                                */
+                                isFirstOfTwoPackets = false;
+                                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
+                            } //If isFirstOfTwoPackets is false
+                            else {
+
+                            }
+                        }
+                        System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1)");
                         tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
                     } //If tokensForTwoPackets % 2 == 0
                     else {
+                        System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0)");
                         tokensWillBeUsed = tokensForTwoPackets / 2;
                     }
-                    changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                    areAllTokensAssigned = true;
-                    System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 }
-
+                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
+                System.out.println (Thread.currentThread().threadId() + " in else if " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
             } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
             else {
                 System.out.println(Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket + " packetsCounter[0]: " + packetsCounter[0]);
@@ -283,9 +295,6 @@ public class WorkScheduler {
         //If it is used for binding tokens to a request tokensWillBeUsed should be the number of tokens that are necessary to bind with minus sign to subtract tokens.
         private static synchronized void changeNumberOfAvailableTokens (int tokensWillBeUsed) {
             buckets[0] += tokensWillBeUsed;
-            if (tokensWillBeUsed > 0) {
-                areAllTokensAssigned = false;
-            }
         }
 
         //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
