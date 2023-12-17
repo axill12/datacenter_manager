@@ -219,42 +219,45 @@ public class WorkScheduler {
             }
             else if (counterForThisPacket == packetsCounter[0]) {
                 if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
+                    System.out.println (Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) in if");
                     tokensWillBeUsed = buckets[0];
                 } else {
-                    //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
-                    if (tokensForTwoPackets % 2 == 1) {
-                        /*If no value is assigned to an int class variable is 0.
+                    /*If no value is assigned to an int class variable is 0.
                           If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if to tokensForTwoPackets never is assigned value.
-                         */
-                        if (tokensForTwoPackets == 0) {
-                            tokensWillBeUsed = buckets[0] / 2;
-                            tokensForTwoPackets = buckets[0];
+                    */
+                    if (tokensForTwoPackets == 0) {
+                        System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets == 0)");
+                        tokensWillBeUsed = buckets[0] / 2;
+                        tokensForTwoPackets = buckets[0];
                             /*It is assigned false,
                               so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
                             */
-                            isFirstOfTwoPackets = false;
-                            changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                        } //If tokensForTwoPackets > 0
-                        else {
-                            if (isFirstOfTwoPackets) {
-                                tokensWillBeUsed = buckets[0] / 2;
-                                tokensForTwoPackets = buckets[0];
+                        isFirstOfTwoPackets = false;
+                    } //If tokensForTwoPackets > 0
+                    else {
+                        if (isFirstOfTwoPackets) {
+                            System.out.println (Thread.currentThread().threadId() + " in if (isFirstOfTwoPackets)");
+                            tokensWillBeUsed = buckets[0] / 2;
+                            tokensForTwoPackets = buckets[0];
                                 /*It is assigned false,
                                   so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
                                 */
-                                isFirstOfTwoPackets = false;
-                                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                            } //If isFirstOfTwoPackets is false
-                            else {
-                                t
+                            isFirstOfTwoPackets = false;
+                        } //If isFirstOfTwoPackets is false
+                        else {
+                            //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
+                            if (tokensForTwoPackets % 2 == 1) {
+                                tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
+                                System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1)");
+                            } else {
+                                tokensWillBeUsed = tokensForTwoPackets / 2;
+                                System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0)");
                             }
+                                /*It is assigned true,
+                                  so when next packet which will arrive will check this variable it is going to have the proper value.
+                                */
+                            isFirstOfTwoPackets = true;
                         }
-                        System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1)");
-                        tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
-                    } //If tokensForTwoPackets % 2 == 0
-                    else {
-                        System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0)");
-                        tokensWillBeUsed = tokensForTwoPackets / 2;
                     }
                 }
                 changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
