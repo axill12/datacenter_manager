@@ -246,7 +246,7 @@ public class WorkScheduler {
                                 changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                             } //If isFirstOfTwoPackets is false
                             else {
-
+                                t
                             }
                         }
                         System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1)");
