@@ -212,7 +212,7 @@ public class WorkScheduler {
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
                     tokensForTwoPackets = buckets[0];
-                    isFirstOfTwoPackets = true;
+                    changeIsFirstOfTwoPackets(true);
                     changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                     System.out.println (Thread.currentThread().threadId() + " in if else " + "tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 }
@@ -232,7 +232,7 @@ public class WorkScheduler {
                             /*It is assigned false,
                               so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
                             */
-                        isFirstOfTwoPackets = false;
+                        changeIsFirstOfTwoPackets(false);
                     } //If tokensForTwoPackets > 0
                     else {
                         if (isFirstOfTwoPackets) {
@@ -242,7 +242,7 @@ public class WorkScheduler {
                                 /*It is assigned false,
                                   so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
                                 */
-                            isFirstOfTwoPackets = false;
+                            changeIsFirstOfTwoPackets(false);
                         } //If isFirstOfTwoPackets is false
                         else {
                             //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
@@ -256,7 +256,7 @@ public class WorkScheduler {
                                 /*It is assigned true,
                                   so when next packet which will arrive will check this variable it is going to have the proper value.
                                 */
-                            isFirstOfTwoPackets = true;
+                            changeIsFirstOfTwoPackets(true);
                         }
                     }
                 }
@@ -310,6 +310,10 @@ public class WorkScheduler {
             } catch (InterruptedException e) {
                 System.out.println ("Another thread interrupted this.");
             }
+        }
+
+        private static synchronized void changeIsFirstOfTwoPackets (boolean flag) {
+            isFirstOfTwoPackets = flag;
         }
 
     }
