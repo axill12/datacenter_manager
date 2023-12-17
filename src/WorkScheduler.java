@@ -223,6 +223,9 @@ public class WorkScheduler {
                 } else {
                     //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
                     if (tokensForTwoPackets % 2 == 1) {
+                        /*If no value is assigned to an int class variable is 0.
+                          If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if to tokensForTwoPackets never is assigned value.
+                         */
                         if (tokensForTwoPackets == 0) {
                             tokensWillBeUsed = buckets[0] / 2;
                             tokensForTwoPackets = buckets[0];
