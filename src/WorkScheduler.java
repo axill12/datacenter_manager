@@ -98,6 +98,12 @@ public class WorkScheduler {
                     }
                     long counterForThisPacket;
                     long timeOfArrivalOfThisPacket;
+                    /*With this variable is calculated early the difference in arrival times of two packets,
+                      so that there is no possibility this thread to write first arrival time of its packets and subtract with arrival time of itself.
+                      In this case it would be zero and if no new packet arrived at most 10 milliseconds before this,
+                      it would be executed wrong piece of code in assignTokens.
+                     */
+                    long arrivalDifference;
                     int tokensWillBeUsed = 0;
                     boolean isFP;
 
@@ -112,7 +118,9 @@ public class WorkScheduler {
                     //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
-                        timeOfArrivalOfThisPacket = writeTimeOfArrivalOfNewPacket(System.currentTimeMillis());
+                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        arrivalDifference = Math.abs(timeOfArrivalOfThisPacket - timesOfArrivalOfPackets[0]);
+                        writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
@@ -142,13 +150,14 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivalDifference, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens(tokensWillBeUsed);
                     } else {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
                         timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        arrivalDifference = Math.abs(timeOfArrivalOfThisPacket - timesOfArrivalOfPackets[0]);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
@@ -176,7 +185,7 @@ public class WorkScheduler {
                         }
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
-                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivalDifference, counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         if (buckets[0] > 0) {
                             System.out.println (Thread.currentThread().threadId() + " in if if (buckets[0] > 0)");
@@ -189,11 +198,10 @@ public class WorkScheduler {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
-                        } //If no new packet came it is useless to execute assignTokens method and it is going to bring isFirstOfTwoPackets in a dangerous state.
-                        if (timesOfArrivalOfPackets[0] == timeOfArrivalOfThisPacket) {
-                            //Some tokens should be free. Thus, they are assigned.
-                            tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         }
+                        arrivalDifference = Math.abs(timeOfArrivalOfThisPacket - timesOfArrivalOfPackets[0]);
+                        //Some tokens should be free. Thus, they are assigned.
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivalDifference, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens(tokensWillBeUsed);
@@ -204,106 +212,58 @@ public class WorkScheduler {
             }
         }
 
-        private int assignTokens (long timeOfArrivalOfThisPacket, long counterForThisPacket) {
+        private int assignTokens (long timeOfArrivalOfThisPacket, long arrivalDifference, long counterForThisPacket) {
             int tokensWillBeUsed;
-            if (counterForThisPacket < packetsCounter[0]) {
-                if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
-                    tokensWillBeUsed = buckets[0];
-                    System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
-                } //If new packet arrived within 10 milliseconds assign half tokens to this packet.
-                else {
-                    /*If no value is assigned to an int class variable is 0.
-                          If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if never is assigned value to tokensForTwoPackets.
-                    */
-                    if (tokensForTwoPackets == 0) {
-                        System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets == 0)");
-                        tokensWillBeUsed = buckets[0] / 2;
-                        changeTokensForTwoPackets();
-                            /*It is assigned false,
-                              so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
-                            */
-                        changeIsFirstOfTwoPackets(false);
-                    } //If
-                    // > 0
-                    else {
-                        if (isFirstOfTwoPackets) {
-                            tokensWillBeUsed = buckets[0] / 2;
-                            changeTokensForTwoPackets();
-                                /*It is assigned false,
-                                  so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
-                                */
-                            changeIsFirstOfTwoPackets(false);
-                            System.out.println (Thread.currentThread().threadId() + " in if (isFirstOfTwoPackets) tokens that are assigned: " + tokensWillBeUsed);
-                        } //If isFirstOfTwoPackets is false
-                        else {
-                            //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
-                            if (tokensForTwoPackets % 2 == 1) {
-                                tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
-                                System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1) tokens that are assigned: " + tokensWillBeUsed);
-                            } else {
-                                tokensWillBeUsed = tokensForTwoPackets / 2;
-                                System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0) tokens that are assigned: " + tokensWillBeUsed);
-                            }
-                                /*It is assigned true,
-                                  so when next packet which will arrive will check this variable it is going to have the proper value.
-                                */
-                            changeIsFirstOfTwoPackets(true);
-                        }
-                    }
-                }
-                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-            }
-            else if (counterForThisPacket == packetsCounter[0]) {
-                if (Math.abs(timesOfArrivalOfPackets[0] - timeOfArrivalOfThisPacket) > 10) {
-                    tokensWillBeUsed = buckets[0];
-                    System.out.println (Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) in if tokens that are assigned: " + tokensWillBeUsed);
-                } else {
-                    /*If no value is assigned to an int class variable is 0.
-                          If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if never is assigned value to tokensForTwoPackets.
-                    */
-                    if (tokensForTwoPackets == 0) {
-                        tokensWillBeUsed = buckets[0] / 2;
-                        changeTokensForTwoPackets();
-                            /*It is assigned false,
-                              so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
-                            */
-                        changeIsFirstOfTwoPackets(false);
-                        System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets == 0) tokens that are assigned: " + tokensWillBeUsed);
-                    } //If tokensForTwoPackets > 0
-                    else {
-                        if (isFirstOfTwoPackets) {
-                            tokensWillBeUsed = buckets[0] / 2;
-                            changeTokensForTwoPackets();
-                                /*It is assigned false,
-                                  so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
-                                */
-                            changeIsFirstOfTwoPackets(false);
-                            System.out.println (Thread.currentThread().threadId() + " in if (isFirstOfTwoPackets) tokens that are assigned: " + tokensWillBeUsed);
-                        } //If isFirstOfTwoPackets is false
-                        else {
-                            //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
-                            if (tokensForTwoPackets % 2 == 1) {
-                                tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
-                                System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1) tokens that are assigned: " + tokensWillBeUsed);
-                            } else {
-                                tokensWillBeUsed = tokensForTwoPackets / 2;
-                                System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0) tokens that are assigned: " + tokensWillBeUsed);
-                            }
-                                /*It is assigned true,
-                                  so when next packet which will arrive will check this variable it is going to have the proper value.
-                                */
-                            changeIsFirstOfTwoPackets(true);
-                        }
-                    }
-                }
-                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                System.out.println (Thread.currentThread().threadId() + " in else if tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
-            } //This block can not be reached. I just write it because otherwise return statement prompts the error; "might not have been initialized".
+            if (arrivalDifference > 10) {
+                tokensWillBeUsed = buckets[0];
+                System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
+            } //If new packet arrived within 10 milliseconds assign half tokens to this packet, or this is the last thread which wrote the arrival time of this packet.
             else {
-                System.out.println(Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket + " packetsCounter[0]: " + packetsCounter[0]);
-                tokensWillBeUsed = 0;
-                System.out.println(Thread.currentThread().threadId() + " in else");
+                /*If no value is assigned to an int class variable is 0.
+                  If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if never is assigned value to tokensForTwoPackets.
+                */
+                if (tokensForTwoPackets == 0) {
+                    tokensWillBeUsed = buckets[0] / 2;
+                    System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets == 0) tokens that are assigned: " + tokensWillBeUsed);
+                    if (tokensWillBeUsed == 0) {
+                        return 0;
+                    }
+                    changeTokensForTwoPackets();
+                    /*It is assigned false,
+                      so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
+                    */
+                    changeIsFirstOfTwoPackets(false);
+                } //If tokensForTwoPackets > 0
+                else {
+                    if (isFirstOfTwoPackets) {
+                        tokensWillBeUsed = buckets[0] / 2;
+                        System.out.println (Thread.currentThread().threadId() + " in if (isFirstOfTwoPackets) tokens that are assigned: " + tokensWillBeUsed);
+                        if (tokensWillBeUsed == 0) {
+                            return 0;
+                        }
+                        changeTokensForTwoPackets();
+                        /*It is assigned false,
+                          so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
+                        */
+                        changeIsFirstOfTwoPackets(false);
+                    } //If isFirstOfTwoPackets is false
+                    else {
+                        //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
+                        if (tokensForTwoPackets % 2 == 1) {
+                            tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
+                            System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1) tokens that are assigned: " + tokensWillBeUsed);
+                        } else {
+                            tokensWillBeUsed = tokensForTwoPackets / 2;
+                            System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0) tokens that are assigned: " + tokensWillBeUsed);
+                        }
+                                /*It is assigned true,
+                                  so when next packet which will arrive will check this variable it is going to have the proper value.
+                                */
+                        changeIsFirstOfTwoPackets(true);
+                    }
+                }
             }
+            changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
             return tokensWillBeUsed;
         }
 
