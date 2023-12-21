@@ -226,6 +226,7 @@ public class WorkScheduler {
                 tokensWillBeUsed = buckets[0];
                 System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 if (returnZero) {
+                    System.out.println (Thread.currentThread().threadId() + "in if (returnZero)");
                     return 0;
                 }
             } //If new packet arrived within 10 milliseconds assign half tokens to this packet, or this is the last thread which wrote the arrival time of this packet.
@@ -233,6 +234,10 @@ public class WorkScheduler {
                 if (timeOfArrivalOfThisPacket == tap && !arrivedAtSameMoment) {
                     tokensWillBeUsed = buckets[0];
                     System.out.println(Thread.currentThread().threadId() + " in if (timeOfArrivalOfThisPacket == tap && !arrivedAtSameMoment) tokens that are assigned: " + tokensWillBeUsed);
+                    if (returnZero) {
+                        System.out.println (Thread.currentThread().threadId() + "in if (returnZero)");
+                        return 0;
+                    }
                 }/*If no value is assigned to an int class variable is 0.
                   If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if never is assigned value to tokensForTwoPackets.
                  */
