@@ -189,8 +189,9 @@ public class WorkScheduler {
                         arrivedAtSameMoment = changeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, true);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
-                        if (!areAllAvailableTokensAssigned) {
-                            System.out.println (Thread.currentThread().threadId() + " in if (!areAllAvailableTokensAssigned)");
+                        //If tokensWillBeUsed != 0 assignTokens should execute again later, because it returns zero if all available tokens would be assigned.
+                        if (!areAllAvailableTokensAssigned || tokensWillBeUsed != 0) {
+                            System.out.println (Thread.currentThread().threadId() + " in if (!areAllAvailableTokensAssigned || tokensWillBeUsed != 0)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
                             changeNumberOfAvailableTokens(tokensWillBeUsed);
@@ -202,7 +203,10 @@ public class WorkScheduler {
                             e.printStackTrace();
                         }
                         arrivedAtSameMoment = changeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
-                        //Some tokens should be free. Thus, they are assigned.
+                        do {
+                            System.out.println (Thread.currentThread().threadId() + " in do while (tokensWillBeUsed == 0)");
+                            tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, false);
+                        } while (tokensWillBeUsed == 0);
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, false);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
@@ -219,14 +223,14 @@ public class WorkScheduler {
           because run would execute return and terminate.
           assignTokens is necessary to execute again in case a new request arrived.
          */
-        private int assignTokens (long timeOfArrivalOfThisPacket, boolean arrivedAtSameMoment, boolean returnZero) {
+        private static synchronized int assignTokens (long timeOfArrivalOfThisPacket, boolean arrivedAtSameMoment, boolean returnZero) {
             int tokensWillBeUsed;
             long tap = timesOfArrivalOfPackets[0];
             if (Math.abs(timeOfArrivalOfThisPacket - tap) > 10) {
                 tokensWillBeUsed = buckets[0];
                 System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 if (returnZero) {
-                    System.out.println (Thread.currentThread().threadId() + "in if (returnZero)");
+                    System.out.println (Thread.currentThread().threadId() + " in if (returnZero)");
                     return 0;
                 }
             } //If new packet arrived within 10 milliseconds assign half tokens to this packet, or this is the last thread which wrote the arrival time of this packet.
@@ -243,7 +247,6 @@ public class WorkScheduler {
                  */
                 else if (tokensForTwoPackets == 0) {
                     tokensWillBeUsed = buckets[0] / 2;
-
                     System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets == 0) tokens that are assigned: " + tokensWillBeUsed);
                     if (tokensWillBeUsed == 0) {
                         return 0;

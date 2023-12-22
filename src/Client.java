@@ -6,9 +6,8 @@ import java.net.UnknownHostException;
 public class Client {
 
     public static void main (String args []) {
-        Worker worker = new Worker ();
-        new Thread(worker).start();
-        new Thread(worker).start();
+        new Thread(new Worker()).start();
+        new Thread(new Worker()).start();
     }
 
     private static class Worker implements Runnable {
