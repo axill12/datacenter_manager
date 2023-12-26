@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -48,8 +50,8 @@ public class WorkScheduler {
     //This variable declares if it is the first of two requests that arrived with at most 10 milliseconds difference.
     private static boolean isFirstOfTwoPackets = true;
 
-    //This variable is true if all available tokens are assigned.
-    private static boolean areAllAvailableTokensAssigned;
+    //This variable is true if request should be sent immediately.
+    private static boolean sendRequestImmediately;
 
     public static void main (String args []) {
         buckets[0] = 10;
@@ -120,7 +122,7 @@ public class WorkScheduler {
                     //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
-                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        timeOfArrivalOfThisPacket =  System.currentTimeMillis();
                         arrivedAtSameMoment = changeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
@@ -190,8 +192,8 @@ public class WorkScheduler {
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, true);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         //If tokensWillBeUsed != 0 assignTokens should execute again later, because it returns zero if all available tokens would be assigned.
-                        if (!areAllAvailableTokensAssigned || tokensWillBeUsed != 0) {
-                            System.out.println (Thread.currentThread().threadId() + " in if (!areAllAvailableTokensAssigned || tokensWillBeUsed != 0)");
+                        if (sendRequestImmediately) {
+                            System.out.println (Thread.currentThread().threadId() + " in if (sendRequestImmediately)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
                             changeNumberOfAvailableTokens(tokensWillBeUsed);
@@ -219,29 +221,36 @@ public class WorkScheduler {
         }
 
         /*returnZero is used,
-          because if all available tokens are assigned and assignTokens is called first time in else of run it should not execute the block in if (!areAllAvailableTokensAssigned),
+          because if all available tokens are assigned and assignTokens is called first time in else of run it should not execute the block in if (sendRequestImmediately),
           because run would execute return and terminate.
           assignTokens is necessary to execute again in case a new request arrived.
          */
-        private static synchronized int assignTokens (long timeOfArrivalOfThisPacket, boolean arrivedAtSameMoment, boolean returnZero) {
+        private static synchronized List<Object> assignTokens (long timeOfArrivalOfThisPacket, boolean arrivedAtSameMoment, boolean returnZero) {
             int tokensWillBeUsed;
             long tap = timesOfArrivalOfPackets[0];
+            List<Object> list = new ArrayList<>(2);
             if (Math.abs(timeOfArrivalOfThisPacket - tap) > 10) {
-                tokensWillBeUsed = buckets[0];
-                System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + tokensWillBeUsed + " time: " + System.currentTimeMillis());
                 if (returnZero) {
                     System.out.println (Thread.currentThread().threadId() + " in if (returnZero)");
-                    return 0;
+                    list.add(0);
+                    list.add(false);
+                    return list;
                 }
+                list.add(buckets[0]);
+                list.add(false);
+                System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + list.get(0) + " time: " + System.currentTimeMillis());
             } //If new packet arrived within 10 milliseconds assign half tokens to this packet, or this is the last thread which wrote the arrival time of this packet.
             else {
                 if (timeOfArrivalOfThisPacket == tap && !arrivedAtSameMoment) {
-                    tokensWillBeUsed = buckets[0];
-                    System.out.println(Thread.currentThread().threadId() + " in if (timeOfArrivalOfThisPacket == tap && !arrivedAtSameMoment) tokens that are assigned: " + tokensWillBeUsed);
                     if (returnZero) {
+                        list.add(0);
+                        list.add(false);
                         System.out.println (Thread.currentThread().threadId() + "in if (returnZero)");
-                        return 0;
+                        return list;
                     }
+                    list.add(buckets[0]);
+                    list.add(false);
+                    System.out.println(Thread.currentThread().threadId() + " in if (timeOfArrivalOfThisPacket == tap && !arrivedAtSameMoment) tokens that are assigned: " + list.get(0));
                 }/*If no value is assigned to an int class variable is 0.
                   If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if never is assigned value to tokensForTwoPackets.
                  */
@@ -291,9 +300,9 @@ public class WorkScheduler {
             }
             changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
             if (buckets[0] == 0) {
-                changeAreAllAvailableTokensAssigned(true);
+                changeSendRequestImmediately(true);
             } else {
-                changeAreAllAvailableTokensAssigned(false);
+                changeSendRequestImmediately(false);
             }
             return tokensWillBeUsed;
         }
@@ -355,8 +364,8 @@ public class WorkScheduler {
             }
         }
 
-        private static void changeAreAllAvailableTokensAssigned (boolean flag) {
-            areAllAvailableTokensAssigned = flag;
+        private static void changeSendRequestImmediately (boolean flag) {
+            sendRequestImmediately = flag;
         }
 
     }
