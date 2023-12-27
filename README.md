@@ -1,0 +1,1 @@
+Usually works if the two requests arrive at the same moment. There is only a case where does not work amd happens rarely. If the two requests arrive with more than 10 milliseconds difference does not work.
