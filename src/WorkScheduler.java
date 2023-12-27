@@ -122,7 +122,7 @@ public class WorkScheduler {
                     //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
-                        timeOfArrivalOfThisPacket =  1703669920650L;
+                        timeOfArrivalOfThisPacket =  System.currentTimeMillis();
                         arrivedAtSameMoment = changeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
@@ -161,7 +161,7 @@ public class WorkScheduler {
                         changeNumberOfAvailableTokens((Integer) list.get(0));
                     } else {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
-                        timeOfArrivalOfThisPacket = 1703669920650L;
+                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
@@ -195,7 +195,7 @@ public class WorkScheduler {
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         //If sendRequestImmediately is true assignTokens should execute again later, because it returns zero if all available tokens would be assigned.
                         if ((Integer) list.get(0) == 5) {
-                            System.out.println (Thread.currentThread().threadId() + " in if (sendRequestImmediately)");
+                            System.out.println (Thread.currentThread().threadId() + " in if ((Integer) list.get(0) == 5)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
                             changeNumberOfAvailableTokens((Integer) list.get(0));
@@ -384,7 +384,7 @@ public class WorkScheduler {
             sendRequestImmediately = flag;
         }
 
-        private static synchronized void writeToLog (PrintWriter writer, int tokens) {
+        private void writeToLog (PrintWriter writer, int tokens) {
             writer.write(Thread.currentThread().threadId() + " tokens that are assigned: " + tokens + "\n");
         }
     }
