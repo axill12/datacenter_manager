@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -111,6 +108,9 @@ public class WorkScheduler {
                     boolean isFP;
                     ArrayList<Object> list;
 
+                    new PrintWriter("log" + Thread.currentThread().threadId() + ".txt").close(); //Deletes the file's content by closing it.
+                    PrintWriter writer = new PrintWriter("log" + Thread.currentThread().threadId() + ".txt");
+
                     synchronized (Worker.class) {
                         isFP = isFirstPacket;
                         //It changes it, so the next packet will know it is not the first packet.
@@ -122,7 +122,7 @@ public class WorkScheduler {
                     //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
-                        timeOfArrivalOfThisPacket =  System.currentTimeMillis();
+                        timeOfArrivalOfThisPacket =  1703669920650L;
                         arrivedAtSameMoment = changeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
@@ -155,12 +155,13 @@ public class WorkScheduler {
                             e.printStackTrace();
                         }
                         list = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, false);
+                        writeToLog(writer, (Integer) list.get(0));
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens((Integer) list.get(0));
                     } else {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
-                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        timeOfArrivalOfThisPacket = 1703669920650L;
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
@@ -190,9 +191,10 @@ public class WorkScheduler {
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
                         arrivedAtSameMoment = changeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         list = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, true);
+                        writeToLog(writer, (Integer) list.get(0));
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         //If sendRequestImmediately is true assignTokens should execute again later, because it returns zero if all available tokens would be assigned.
-                        if (sendRequestImmediately) {
+                        if ((Integer) list.get(0) == 5) {
                             System.out.println (Thread.currentThread().threadId() + " in if (sendRequestImmediately)");
                             sendRequest(6834, argumentForServer);
                             waitServerToFinishThisRequest();
@@ -213,10 +215,13 @@ public class WorkScheduler {
                             }
                             list = assignTokens(timeOfArrivalOfThisPacket, arrivedAtSameMoment, false);
                         } while ((Integer) list.get(0) == 0);
+                        writeToLog(writer, (Integer) list.get(0));
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens((Integer) list.get(0));
                     }
+
+                    writer.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -379,6 +384,9 @@ public class WorkScheduler {
             sendRequestImmediately = flag;
         }
 
+        private static synchronized void writeToLog (PrintWriter writer, int tokens) {
+            writer.write(Thread.currentThread().threadId() + " tokens that are assigned: " + tokens + "\n");
+        }
     }
 
 }
