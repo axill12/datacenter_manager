@@ -122,7 +122,7 @@ public class WorkScheduler {
                     //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
-                        timeOfArrivalOfThisPacket =  1703669920650L;
+                        timeOfArrivalOfThisPacket =  System.currentTimeMillis();
                         arrivedAtSameMoment = computeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
@@ -161,7 +161,7 @@ public class WorkScheduler {
                         changeNumberOfAvailableTokens((Integer) list.get(0));
                     } else {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
-                        timeOfArrivalOfThisPacket = 1703669920670L;
+                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
@@ -325,7 +325,6 @@ public class WorkScheduler {
                 }
             }
             changeNumberOfAvailableTokens(-1 * (Integer) list.get(0));
-            System.out.println (Thread.currentThread().threadId() + " -1 * (Integer) list.get(0): " + -1 * (Integer) list.get(0));
             if (buckets[0] == 0) {
                 list.add(true);
             } else {
