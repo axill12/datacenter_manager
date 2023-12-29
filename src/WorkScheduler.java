@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -118,7 +119,7 @@ public class WorkScheduler {
                     //If it is the first packet it came to execute
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
-                        timeOfArrivalOfThisPacket =  System.currentTimeMillis();
+                        timeOfArrivalOfThisPacket =  generateRandomNumber();
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
@@ -149,14 +150,14 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, false);
+                        tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket);
                         writeToLog(writer, tokensWillBeUsed);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens( tokensWillBeUsed);
                     } else {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
-                        timeOfArrivalOfThisPacket = System.currentTimeMillis();
+                        timeOfArrivalOfThisPacket = generateRandomNumber();
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
@@ -201,7 +202,7 @@ public class WorkScheduler {
                             if (i == 1) {
                                 System.out.println (Thread.currentThread().threadId() + " in do while (tokens which will be used == 0)");
                             }
-                            tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, false);
+                            tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket);
                         } while (tokensWillBeUsed == 0);
                         writeToLog(writer, tokensWillBeUsed);
                         sendRequest(6834, argumentForServer);
@@ -371,6 +372,12 @@ public class WorkScheduler {
 
         private static synchronized void writeToLog (PrintWriter writer, int tokens) {
             writer.write(Thread.currentThread().threadId() + " tokens that are assigned: " + tokens + "\n");
+        }
+
+        private static long generateRandomNumber () {
+            Random random = new Random();
+            random.setSeed(System.currentTimeMillis());
+            return random.nextLong() % 2 + 1703873804597L;
         }
     }
 
