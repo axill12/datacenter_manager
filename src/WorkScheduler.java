@@ -145,7 +145,7 @@ public class WorkScheduler {
                         }
 
                         try {
-                            Thread.sleep(10);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -214,6 +214,29 @@ public class WorkScheduler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        private static synchronized int assignTokensTest (long timeOfArrivalOfThisPacket, int counterForThisPacket) {
+            long tap = timesOfArrivalOfPackets[0];
+            System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[0]: " + timesOfArrivalOfPackets[0] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
+            int tokensWillBeUsed;
+            if (timeOfArrivalOfThisPacket == tap) {
+                if (counterForThisPacket == packetsCounter[0]) {
+                    tokensWillBeUsed = buckets[0];
+                    System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
+                } //if counterForThisPacket + 1 == packetsCounter[0]
+                else {
+                    tokensWillBeUsed = buckets[0] / 2;
+                    changeTokensForTwoPackets();
+                    System.out.println(Thread.currentThread().threadId() + " in else (counterForThisPacket + 1 == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
+                }
+            } // else if timeOfArrivalOfThisPacket != tap
+            else {
+                tokensWillBeUsed = buckets[0];
+                System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
+            }
+            changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
+            return tokensWillBeUsed;
         }
 
         /*returnZero is used,
@@ -293,7 +316,7 @@ public class WorkScheduler {
                     System.out.println (Thread.currentThread().threadId() + " in else else, shouldn't be here");
                 }
             }
-            changeNumberOfAvailableTokens(-1 * (Integer) tokensWillBeUsed);
+            changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
             return tokensWillBeUsed;
         }
 
