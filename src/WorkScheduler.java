@@ -101,7 +101,6 @@ public class WorkScheduler {
                       In this case it would subtract its arrival time with timesOfArrivalOfPackets[cell] and it would calculate zero.
                       Thus, it would execute wrong piece of code without this boolean variable.
                      */
-                    boolean arrivedAtSameMoment;
                     boolean isFP;
                     int tokensWillBeUsed;
 
@@ -120,7 +119,6 @@ public class WorkScheduler {
                     if (isFP) {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] == -1");
                         timeOfArrivalOfThisPacket =  System.currentTimeMillis();
-                        arrivedAtSameMoment = computeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         counterForThisPacket = increasePacketCounter();
@@ -186,24 +184,12 @@ public class WorkScheduler {
                         }
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
-                        arrivedAtSameMoment = computeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
-                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, true);
-                        writeToLog(writer, tokensWillBeUsed);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
-                        //If sendRequestImmediately is true assignTokens should execute again later, because it returns zero if all available tokens would be assigned.
-                        if (tokensWillBeUsed == 5) {
-                            System.out.println (Thread.currentThread().threadId() + " in if (sendRequestImmediately)");
-                            sendRequest(6834, argumentForServer);
-                            waitServerToFinishThisRequest();
-                            changeNumberOfAvailableTokens(tokensWillBeUsed);
-                            return;
-                        }
                         try {
-                            Thread.sleep(10);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        arrivedAtSameMoment = computeArrivedAtSameMoment(timeOfArrivalOfThisPacket);
                         int i = 0;
                         do {
                             try {
@@ -237,10 +223,11 @@ public class WorkScheduler {
          */
         private static synchronized int assignTokens (long timeOfArrivalOfThisPacket, int counterForThisPacket, boolean returnZero) {
             long tap = timesOfArrivalOfPackets[0];
+            System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[0]: " + timesOfArrivalOfPackets[0] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
             int tokensWillBeUsed;
             if (Math.abs(timeOfArrivalOfThisPacket - tap) > 10) {
                 if (returnZero) {
-                    System.out.println (Thread.currentThread().threadId() + " in if (returnZero)");
+                    System.out.println (Thread.currentThread().threadId() + " in if if (returnZero)");
                     return 0;
                 }
                 tokensWillBeUsed = buckets[0];
@@ -248,10 +235,7 @@ public class WorkScheduler {
             } //If new packet arrived within 10 milliseconds assign half tokens to this packet, or this is the last thread which wrote the arrival time of this packet.
             else {
                 if (timeOfArrivalOfThisPacket == tap) {
-                    if (returnZero) {
-                        System.out.println (Thread.currentThread().threadId() + " in if (returnZero)");
-                        return 0;
-                    } else if (counterForThisPacket == packetsCounter[0]) {
+                    if (counterForThisPacket == packetsCounter[0]) {
                         tokensWillBeUsed = buckets[0];
                         System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
                     } //if counterForThisPacket + 1 == packetsCounter[0]
@@ -360,14 +344,6 @@ public class WorkScheduler {
 
         private static synchronized void changeTokensForTwoPackets () {
             tokensForTwoPackets = buckets[0];
-        }
-
-        private boolean computeArrivedAtSameMoment (long timeOfArrivalOfThisPacket) {
-            if (timesOfArrivalOfPackets[0] == timeOfArrivalOfThisPacket) {
-                return true;
-            } else {
-                return false;
-            }
         }
 
         private static synchronized void writeToLog (PrintWriter writer, int tokens) {
