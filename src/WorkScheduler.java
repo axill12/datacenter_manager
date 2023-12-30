@@ -39,15 +39,6 @@ public class WorkScheduler {
 
     private static Condition isPacketsCounterZero = packetsCounterLock.newCondition();
 
-    /*These are the tokens are going to be used totally by two packets when they arrive with at most 10 millisecond difference.
-    Without knowing the initial token's number the two packets should use totally, it would assign the half of tokens remained after first packet took the initial half tokens.
-    Thus second packet would use the half of the half of initial tokens, while we want to take the half.
-     */
-    private static int tokensForTwoPackets;
-
-    //This variable declares if it is the first of two requests that arrived with at most 10 milliseconds difference.
-    private static boolean isFirstOfTwoPackets = true;
-
     public static void main (String args []) {
         buckets[0] = 10;
         buckets[1] = 10;
@@ -105,9 +96,6 @@ public class WorkScheduler {
                     boolean isFP;
                     int tokensWillBeUsed;
 
-                    new PrintWriter("log" + Thread.currentThread().threadId() + ".txt").close(); //Deletes the file's content by closing it.
-                    PrintWriter writer = new PrintWriter("log" + Thread.currentThread().threadId() + ".txt");
-
                     synchronized (Worker.class) {
                         isFP = isFirstPacket;
                         //It changes it, so the next packet will know it is not the first packet.
@@ -150,8 +138,7 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket);
-                        writeToLog(writer, tokensWillBeUsed);
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens( tokensWillBeUsed);
@@ -202,22 +189,19 @@ public class WorkScheduler {
                             if (i == 1) {
                                 System.out.println (Thread.currentThread().threadId() + " in do while (tokens which will be used == 0)");
                             }
-                            tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket);
+                            tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         } while (tokensWillBeUsed == 0);
-                        writeToLog(writer, tokensWillBeUsed);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
                         changeNumberOfAvailableTokens(tokensWillBeUsed);
                     }
-
-                    writer.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        private static synchronized int assignTokensTest (long timeOfArrivalOfThisPacket, int counterForThisPacket) {
+        private static synchronized int assignTokens (long timeOfArrivalOfThisPacket, int counterForThisPacket) {
             long tap = timesOfArrivalOfPackets[0];
             System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[0]: " + timesOfArrivalOfPackets[0] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
             int tokensWillBeUsed;
@@ -228,94 +212,12 @@ public class WorkScheduler {
                 } //if counterForThisPacket + 1 == packetsCounter[0]
                 else {
                     tokensWillBeUsed = buckets[0] / 2;
-                    changeTokensForTwoPackets();
                     System.out.println(Thread.currentThread().threadId() + " in else (counterForThisPacket + 1 == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
                 }
             } // else if timeOfArrivalOfThisPacket != tap
             else {
                 tokensWillBeUsed = buckets[0];
                 System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
-            }
-            changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-            return tokensWillBeUsed;
-        }
-
-        /*returnZero is used,
-          because if all available tokens are assigned and assignTokens is called first time in else of run it should not execute the block in if (sendRequestImmediately),
-          because run would execute return and terminate.
-          assignTokens is necessary to execute again in case a new request arrived.
-         */
-        private static synchronized int assignTokens (long timeOfArrivalOfThisPacket, int counterForThisPacket, boolean returnZero) {
-            long tap = timesOfArrivalOfPackets[0];
-            System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[0]: " + timesOfArrivalOfPackets[0] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
-            int tokensWillBeUsed;
-            if (Math.abs(timeOfArrivalOfThisPacket - tap) > 10) {
-                if (returnZero) {
-                    System.out.println (Thread.currentThread().threadId() + " in if if (returnZero)");
-                    return 0;
-                }
-                tokensWillBeUsed = buckets[0];
-                System.out.println (Thread.currentThread().threadId() + " in if if tokens that are assigned: " + tokensWillBeUsed);
-            } //If new packet arrived within 10 milliseconds assign half tokens to this packet, or this is the last thread which wrote the arrival time of this packet.
-            else {
-                if (timeOfArrivalOfThisPacket == tap) {
-                    if (counterForThisPacket == packetsCounter[0]) {
-                        tokensWillBeUsed = buckets[0];
-                        System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
-                    } //if counterForThisPacket + 1 == packetsCounter[0]
-                    else {
-                        tokensWillBeUsed = buckets[0] / 2;
-                        changeTokensForTwoPackets();
-                        System.out.println(Thread.currentThread().threadId() + " in else (counterForThisPacket + 1 == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
-                    }
-                }/*If no value is assigned to an int class variable is 0.
-                  If it is the first ever packet that arrived if (tokensForTwoPackets == 0) is executed even if never is assigned value to tokensForTwoPackets.
-                 */
-                else if (tokensForTwoPackets == 0) {
-                    tokensWillBeUsed = buckets[0] / 2;
-                    if (tokensWillBeUsed == 0) {
-                        System.out.print(Thread.currentThread().threadId() + " in else if (tokensForTwoPackets == 0) if (tokensWillBeUsed == 0)");
-                        return 0;
-                    }
-                    System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets == 0) tokens that are assigned: " + tokensWillBeUsed);
-                    changeTokensForTwoPackets();
-                    /*It is assigned false,
-                      so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
-                    */
-                    changeIsFirstOfTwoPackets(false);
-                } //If tokensForTwoPackets > 0
-                else if (tokensForTwoPackets != 0) {
-                    if (isFirstOfTwoPackets) {
-                        tokensWillBeUsed = buckets[0] / 2;
-                        if (tokensWillBeUsed == 0) {
-                            System.out.println (Thread.currentThread().threadId() + " in else if (tokensForTwoPackets != 0) in if (isFirstOfTwoPackets)");
-                            return 0;
-                        }
-                        System.out.println (Thread.currentThread().threadId() + " in if (isFirstOfTwoPackets) tokens that are assigned: " + tokensWillBeUsed);
-                        changeTokensForTwoPackets();
-                        /*It is assigned false,
-                          so when next packet which will arrive at most 10 millisecond after this will check this variable it is going to have the proper value.
-                        */
-                        changeIsFirstOfTwoPackets(false);
-                    } //If isFirstOfTwoPackets is false
-                    else {
-                        //This if else is necessary because I do not know if tokensForTwoPackets is even or odd number.
-                        if (tokensForTwoPackets % 2 == 1) {
-                            tokensWillBeUsed = tokensForTwoPackets / 2 + 1;
-                            System.out.println (Thread.currentThread().threadId() + " in if (tokensForTwoPackets % 2 == 1) tokens that are assigned: " + tokensWillBeUsed);
-                        } else {
-                            tokensWillBeUsed = tokensForTwoPackets / 2;
-                            System.out.println (Thread.currentThread().threadId() + " in else (if tokensForTwoPackets % 2 == 0) tokens that are assigned: " + tokensWillBeUsed);
-                        }
-                        /*It is assigned true,
-                          so when next packet which will arrive will check this variable it is going to have the proper value.
-                        */
-                        changeIsFirstOfTwoPackets(true);
-                    }
-                } else {
-                    tokensWillBeUsed = 0;
-                    System.out.println (Thread.currentThread().threadId() + " in else else, shouldn't be here");
-                }
             }
             changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
             return tokensWillBeUsed;
@@ -331,9 +233,8 @@ public class WorkScheduler {
         /*Return timesOfArrivalOfPackets[index] a method variable can store this value.
          If it didn't return it, timesOfArrivalOfPackets[cell] could be changed by another thread and method variable wouldn't store wright value.
          */
-        private static synchronized long writeTimeOfArrivalOfNewPacket (long timeOfArrivalOfThisPacket) {
+        private static synchronized void writeTimeOfArrivalOfNewPacket (long timeOfArrivalOfThisPacket) {
             timesOfArrivalOfPackets[0] = timeOfArrivalOfThisPacket;
-            return timesOfArrivalOfPackets[0];
         }
 
         private static void sendRequest (int port, String argumentForServer) {
@@ -356,28 +257,16 @@ public class WorkScheduler {
         //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
         private static void waitServerToFinishThisRequest () {
             try {
-                Thread.sleep(2500);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 System.out.println ("Another thread interrupted this.");
             }
         }
 
-        private static synchronized void changeIsFirstOfTwoPackets (boolean flag) {
-            isFirstOfTwoPackets = flag;
-        }
-
-        private static synchronized void changeTokensForTwoPackets () {
-            tokensForTwoPackets = buckets[0];
-        }
-
-        private static synchronized void writeToLog (PrintWriter writer, int tokens) {
-            writer.write(Thread.currentThread().threadId() + " tokens that are assigned: " + tokens + "\n");
-        }
-
         private static long generateRandomNumber () {
             Random random = new Random();
             random.setSeed(System.currentTimeMillis());
-            return random.nextLong() % 2 + 1703873804597L;
+            return Math.abs(random.nextLong()) % 2 + 1703873804597L;
         }
     }
 
