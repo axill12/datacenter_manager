@@ -250,8 +250,8 @@ public class WorkScheduler {
         }
 
         //If it is used for binding tokens to a request tokensWillBeUsed should be the number of tokens that are necessary to bind with minus sign to subtract tokens.
-        private static synchronized void changeNumberOfAvailableTokens (int tokensWillBeUsed) {
-            buckets[0] += tokensWillBeUsed;
+        private static synchronized void changeNumberOfAvailableTokens (int tokens) {
+            buckets[0] += tokens;
         }
 
         //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
