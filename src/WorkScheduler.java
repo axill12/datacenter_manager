@@ -156,6 +156,9 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
+                          enters if (counterForThisPacket == packetsCounter[0]) and takes all tokens.
+                        */
                         if (packetsCounter[0] == counterForThisPacket) {
                             try {
                                 Thread.sleep(50);
@@ -203,6 +206,9 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
+                          enters if (counterForThisPacket == packetsCounter[0]) and takes all tokens.
+                        */
                         if (packetsCounter[0] == counterForThisPacket) {
                             try {
                                 Thread.sleep(50);
@@ -240,6 +246,10 @@ public class WorkScheduler {
             if (timeOfArrivalOfThisPacket == tap) {
                 if (counterForThisPacket == packetsCounter[0]) {
                     tokensWillBeUsed = buckets[0];
+                    /*If two requests arrive at the same time, the second enters this if.
+                      If it does not assign 0 to variable totalWorkOfTwoRequests may the requests of the next pair of requests
+                      that will arrive at the same moment will not add their work to 0, because variable totalWorkOfTwoRequests is not 0.
+                     */
                     setTotalWorkOfTwoRequests (0);
                     System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
                 } //if counterForThisPacket + 1 == packetsCounter[0]
