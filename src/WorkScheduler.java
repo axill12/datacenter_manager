@@ -28,8 +28,8 @@ public class WorkScheduler {
      */
     private static int packetsCounter[] = new int [3];
 
-    /*If it is the first packet is true. Without the first two threads may enter both at if (timesOfArrivalOfPackets[0] == -1)
-      because timesOfArrivalOfPackets[0] didn't have time to change.
+    /*If it is the first packet is true. Without it both the first two packets, if they arrive closely (if they are sent together) would enter in if (isFP),
+      because timesOfArrivalOfPackets[0] didn't have time to change and this could cause wrong results.
     */
     private static boolean isFirstPacket = true;
 
@@ -89,10 +89,6 @@ public class WorkScheduler {
                     }
                     int counterForThisPacket;
                     long timeOfArrivalOfThisPacket;
-                    /*If two packets arrive at same moment it is true, if it is false may one packet arrived and the last which wrote in timesOfArrivalOfPackets[cell] is itself.
-                      In this case it would subtract its arrival time with timesOfArrivalOfPackets[cell] and it would calculate zero.
-                      Thus, it would execute wrong piece of code without this boolean variable.
-                     */
                     boolean isFP;
                     int tokensWillBeUsed;
 
