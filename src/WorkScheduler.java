@@ -86,13 +86,6 @@ public class WorkScheduler {
                     System.err.println("The argument for server is not valid, because is not number. The request will not be sent to server. Thread " + Thread.currentThread().threadId() + " terminates.");
                     return;
                 }
-                //With this variable program can recognize if it is the first of two requests that arrive at the same time.
-                boolean isFirstOfTwoRequests;
-                if (totalWorkOfTwoRequests == 0) {
-                    isFirstOfTwoRequests = true;
-                } else {
-                    isFirstOfTwoRequests = false;
-                }
                 setTotalWorkOfTwoRequests(totalWorkOfTwoRequests + work);
                 //It's the server's name that is going to pass the argument it needs.
                 String nameOfClassOfServer = reader.readLine();
