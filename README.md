@@ -1,0 +1,1 @@
+Now it splits tokens ONLY if two requests arrive at the same time, if two requests arrive with time difference from 1 to 10 milliseconds or more does not share tokens. It works in all cases except a very rare one when two requests arrive at the same moment. Moreover i removed redundant code.
