@@ -244,22 +244,41 @@ public class WorkScheduler {
 
         private static synchronized int assignTokens (long timeOfArrivalOfThisPacket, int counterForThisPacket, int work) {
             long tap = timesOfArrivalOfPackets[0];
-            System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[0]: " + timesOfArrivalOfPackets[0] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
             int tokensWillBeUsed;
             if (timeOfArrivalOfThisPacket == tap) {
                 if (counterForThisPacket == packetsCounter[0]) {
-                    tokensWillBeUsed = buckets[0];
+                    /*Sometimes the other thread increases the totalWorkOfTwoRequests
+                      and then this thread checks the condition counterForThisPacket == packetsCounter[0] of this if before the other thread increases packetsCounter[0].
+                      In this case, if the two requests arrive at the same moment it is wrong to assign all tokens to it.
+                      That is why there is if (work < totalWorkOfTwoRequests)'s block.
+                    */
+                    if (work < totalWorkOfTwoRequests) {
+                        if ((work / (double) totalWorkOfTwoRequests) > 0.5) {
+                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests) * 10);
+                            System.out.println(Thread.currentThread().threadId() + " in if (timeOfArrivalOfThisPacket == tap) if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed);
+                        } /*If work / (double) totalWorkOfTwoRequests < 0.1, (work / (double) totalWorkOfTwoRequests) * 10 < 1,
+                        thus (int) (work / (double) totalWorkOfTwoRequests) is going to be 0 and this request is going to get zero 0.
+                        So is not going to be executed. Thence if (work / (double) totalWorkOfTwoRequests) < 0.5,
+                        (int) (work / (double) totalWorkOfTwoRequests) + 1 is assigned to tokensWillBeUsed.
+                      */
+                        else {
+                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests) * 10) + 1;
+                            System.out.println(Thread.currentThread().threadId() + " in if (timeOfArrivalOfThisPacket == tap) if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed);
+                        }
+                    } else {
+                        tokensWillBeUsed = buckets[0];
+                        System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0])  else tokens assigned: " + tokensWillBeUsed);
+                    }
                     /*If two requests arrive at the same time, the second enters this if.
                       If it does not assign 0 to variable totalWorkOfTwoRequests may the requests of the next pair of requests
                       that will arrive at the same moment will not add their work to 0, because variable totalWorkOfTwoRequests is not 0.
                      */
                     setTotalWorkOfTwoRequests (0);
-                    System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[0]) tokens assigned: " + tokensWillBeUsed);
                 } //if counterForThisPacket + 1 == packetsCounter[0]
                 else {
                     if ((work / (double) totalWorkOfTwoRequests) > 0.5) {
                         tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests) * 10);
-                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed);
+                        System.out.println(Thread.currentThread().threadId() + " in else if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed);
                     } /*If work / (double) totalWorkOfTwoRequests < 0.1, (work / (double) totalWorkOfTwoRequests) * 10 < 1,
                         thus (int) (work / (double) totalWorkOfTwoRequests) is going to be 0 and this request is going to get zero 0.
                         So is not going to be executed. Thence if (work / (double) totalWorkOfTwoRequests) < 0.5,
@@ -267,7 +286,7 @@ public class WorkScheduler {
                       */
                     else {
                         tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests) * 10) + 1;
-                        System.out.println(Thread.currentThread().threadId() + " in if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed);
+                        System.out.println(Thread.currentThread().threadId() + " in else if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed);
                     }
                     setTotalWorkOfTwoRequests (0);
                 }
@@ -275,6 +294,7 @@ public class WorkScheduler {
             else {
                 tokensWillBeUsed = buckets[0];
                 System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
+                setTotalWorkOfTwoRequests (0);
             }
             changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
             return tokensWillBeUsed;
