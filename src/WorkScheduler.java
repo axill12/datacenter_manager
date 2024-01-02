@@ -201,6 +201,7 @@ public class WorkScheduler {
                                 System.out.println(Thread.currentThread().threadId() + " the other thread is not in its lock yet. This is the second calling of packetsCounterCondIf.signal().");
                             }
                         }
+
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
                         writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
