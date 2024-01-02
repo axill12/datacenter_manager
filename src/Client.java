@@ -15,7 +15,7 @@ public class Client {
                 if (userInput.equals("1")) {
                     new Thread(new Worker("8888")).start();
                 } else if (userInput.equals("2")) {
-                    new Thread(new Worker("4444")).start();
+                    new Thread(new Worker("1")).start();
                     new Thread(new Worker("9999")).start();
                 } else if (userInput.equals("ex")) {
                     break;
