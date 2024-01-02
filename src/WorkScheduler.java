@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,9 +36,13 @@ public class WorkScheduler {
 
     private static volatile boolean isInPacketsCounterLock = false;
 
-    private static ReentrantLock packetsCounterLock = new ReentrantLock();
+    private static ReentrantLock packetsCounterLockIf = new ReentrantLock();
 
-    private static Condition isPacketsCounterZero = packetsCounterLock.newCondition();
+    private static ReentrantLock packetsCounterLockElse = new ReentrantLock();
+
+    private static Condition packetsCounterCondIf = packetsCounterLockIf.newCondition();
+
+    private static Condition packetsCounterCondElse = packetsCounterLockElse.newCondition();
 
     //Its first value is zero because I did not assign it a value.
     private static int totalWorkOfTwoRequests;
@@ -124,30 +129,34 @@ public class WorkScheduler {
                         counterForThisPacket = increasePacketCounter();
                         System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
 
-                        /*If isPacketsCounterZero.signal() exists without this loop sometimes this command is executed before isPacketsCounterZero.await().
-                          When is executed this thread just continues, but the other stays stuck in lock, specifically in packetsCounterLock.lock().
-                          This loop executes until packetsCounter[0] reach 2, which means the other thread executed increasePacketCounter().
-                         */
-                        while (isInPacketsCounterLock == false && packetsCounter[0] <= 2) {
-                            System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
-                            try {
-                                isPacketsCounterZero.signal();
-                                System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
-                            } catch (IllegalMonitorStateException e) {
-                                System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
-                            }
-                            //Without break for some reason does not exit
-                            if (packetsCounter[0] == 2) {
-                                System.out.println(Thread.currentThread().threadId() + " in if (packetsCounter[0] == 2) just before break");
-                                break;
-                            }
-                            System.out.println(Thread.currentThread().threadId() + " packetsCounter[0]: " + packetsCounter[0]);
+                        //Without this block the thread of the other request could have counterForThisPacket == 1 and this would cause problems.
+                        try {
+                            packetsCounterCondElse.signal();
+                            System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
+                        } catch (IllegalMonitorStateException e) {
+                            System.out.println (Thread.currentThread().threadId() + " the other thread is not in its lock yet. This is the first calling of packetsCounterCondElse.signal().");
+                        }
+                        packetsCounterLockIf.lock();
+                        try {
+                            System.out.println(Thread.currentThread().threadId() + " is in packetsCounterLockIf");
+                            packetsCounterCondIf.await(2000, TimeUnit.MILLISECONDS);
+                        } catch (InterruptedException e) {
+                            System.out.println(Thread.currentThread().threadId() + " is interrupted. It returns.");
+                            return;
+                        } finally {
+                            packetsCounterLockIf.unlock();
+                        }
+                        try {
+                            packetsCounterCondElse.signal();
+                            System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
+                        } catch (IllegalMonitorStateException e) {
+                            System.out.println(Thread.currentThread().threadId() + " the other thread is not in its lock yet. This is the second calling of packetsCounterCondElse.signal().");
                         }
 
                         try {
                             Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                        } catch (InterruptedException ie) {
+                            ie.printStackTrace();
                         }
                         /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
                           enters if (counterForThisPacket == packetsCounter[0]) and takes all tokens.
@@ -167,28 +176,29 @@ public class WorkScheduler {
                         System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[0] > -1");
                         timeOfArrivalOfThisPacket = generateRandomNumber();
                         System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
-                        /*If lock and condition are not used, then the second thread that serves the second request,
-                          reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
-                          Thus second thread's counterForThisPacket equals 1 and first's counterForThisPacket equals 2,
-                          because it increases after second thread's, which is abnormal.
-                        */
+
+                        ////Without this block the thread of the request in if (isFP) could have counterForThisPacket == 2 and this would cause problems.
                         if (packetsCounter[0] == 0) {
                             try {
-                                isInPacketsCounterLock = true;
-                                System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
-                                packetsCounterLock.lock();
-                                while (packetsCounter[0] == 0) {
-                                    System.out.println (Thread.currentThread().threadId() + " In while in lock");
-                                    isPacketsCounterZero.await();
-                                }
-                            } catch(InterruptedException e) {
-                                e.printStackTrace();
+                                packetsCounterCondIf.signal();
+                            } catch (IllegalMonitorStateException e) {
+                                System.out.println (Thread.currentThread().threadId() + " the other thread is not in its lock yet. This is the first calling of packetsCounterCondIf.signal().");
+                            }
+                            packetsCounterLockElse.lock();
+                            try {
+                                System.out.println(Thread.currentThread().threadId() + " is in packetsCounterLockElse");
+                                packetsCounterCondElse.await(2000, TimeUnit.MILLISECONDS);
+                            } catch (InterruptedException e) {
+                                System.out.println(Thread.currentThread().threadId() + " is interrupted. It returns.");
+                                return;
                             } finally {
-                                try {
-                                    packetsCounterLock.unlock();
-                                } catch (IllegalMonitorStateException e) {
-                                    e.printStackTrace();
-                                }
+                                packetsCounterLockElse.unlock();
+                            }
+                            try {
+                                packetsCounterCondIf.signal();
+                                System.out.println (Thread.currentThread().threadId() + " just after packetsCounterCondIf.signal()");
+                            } catch (IllegalMonitorStateException e) {
+                                System.out.println(Thread.currentThread().threadId() + " the other thread is not in its lock yet. This is the second calling of packetsCounterCondIf.signal().");
                             }
                         }
                         counterForThisPacket = increasePacketCounter();
