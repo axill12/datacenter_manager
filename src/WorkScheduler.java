@@ -33,31 +33,26 @@ public class WorkScheduler {
     */
     private static boolean isFirstPacket[] = new boolean [3];
 
-    private static volatile boolean isInPacketsCounterLock = false;
+    private static volatile boolean isInPacketsCounterLock[] = new boolean[3];
 
-    private static ReentrantLock packetsCounterLock = new ReentrantLock();
+    private static ReentrantLock packetsCounterLock[] = new ReentrantLock[3];
 
-    private static Condition isPacketsCounterZero = packetsCounterLock.newCondition();
+    private static Condition isPacketsCounterZero[] = new Condition[3];
 
     //Its first value is zero because I did not assign it a value.
     private static int totalWorkOfTwoRequests[] = new int [3];
 
     public static void main (String args []) {
-        buckets[0] = 10;
-        buckets[1] = 10;
-        buckets[2] = 10;
 
-        timesOfArrivalOfPackets[0] = -1;
-        timesOfArrivalOfPackets[1] = -1;
-        timesOfArrivalOfPackets[2] = -1;
-
-        packetsCounter[0] = 0;
-        packetsCounter[1] = 0;
-        packetsCounter[2] = 0;
-
-        isFirstPacket[0] = true;
-        isFirstPacket[1] = true;
-        isFirstPacket[2] = true;
+        for (int i=0; i<3; i++) {
+            buckets[i] = 10;
+            timesOfArrivalOfPackets[i] = -1;
+            packetsCounter[i] = 0;
+            isFirstPacket[i] = true;
+            isInPacketsCounterLock[i] = false;
+            packetsCounterLock[i] = new ReentrantLock();
+            isPacketsCounterZero[i] = packetsCounterLock[i].newCondition();
+        }
 
         try (ServerSocket server = new ServerSocket((7169))) {
             while (true) {
@@ -102,145 +97,143 @@ public class WorkScheduler {
                     serverCell = 2;
                 }
                 setTotalWorkOfTwoRequests(totalWorkOfTwoRequests[serverCell] + work);
-                //It's the server's name that is going to pass the argument it needs.
-                if (nameOfClassOfServer.equals("Server1")) {
-                    //If there aren't tokens waits till some are free.
-                    if (buckets[serverCell] == 0) {
-                        try {
-                            Thread.sleep(2000);
-                        } catch (InterruptedException e) {
-                            System.out.println ("Another thread interrupted this.");
-                        }
+                //If there aren't tokens waits till some are free.
+                if (buckets[serverCell] == 0) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        System.out.println ("Another thread interrupted this.");
                     }
-                    int counterForThisPacket;
-                    long timeOfArrivalOfThisPacket;
+                }
+                int counterForThisPacket;
+                long timeOfArrivalOfThisPacket;
                     /*If two packets arrive at same moment it is true, if it is false may one packet arrived and the last which wrote in timesOfArrivalOfPackets[cell] is itself.
                       In this case it would subtract its arrival time with timesOfArrivalOfPackets[cell] and it would calculate zero.
                       Thus, it would execute wrong piece of code without this boolean variable.
                      */
-                    boolean isFP;
-                    int tokensWillBeUsed;
+                boolean isFP;
+                int tokensWillBeUsed;
 
-                    synchronized (Worker.class) {
-                        isFP = isFirstPacket[serverCell];
-                        //It changes it, so the next packet will know it is not the first packet.
-                        if (isFP) {
-                            isFirstPacket[serverCell] = false;
-                        }
-                    }
-
-                    //If it is the first packet it came to execute
+                synchronized (Worker.class) {
+                    isFP = isFirstPacket[serverCell];
+                    //It changes it, so the next packet will know it is not the first packet.
                     if (isFP) {
-                        System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] == -1");
-                        timeOfArrivalOfThisPacket =  generateRandomNumber();
-                        writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
-                        System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
-                        counterForThisPacket = increasePacketCounter();
-                        System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
+                        isFirstPacket[serverCell] = false;
+                    }
+                }
+
+                //If it is the first packet it came to execute
+                if (isFP) {
+                    System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] == -1");
+                    timeOfArrivalOfThisPacket =  generateRandomNumber();
+                    writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
+                    System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
+                    counterForThisPacket = increasePacketCounter();
+                    System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
 
                         /*If isPacketsCounterZero.signal() exists without this loop sometimes this command is executed before isPacketsCounterZero.await().
                           When is executed this thread just continues, but the other stays stuck in lock, specifically in packetsCounterLock.lock().
                           This loop executes until packetsCounter[serverCell] reach 2, which means the other thread executed increasePacketCounter().
                          */
-                        while (isInPacketsCounterLock == false && packetsCounter[serverCell] <= 2) {
-                            System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
-                            try {
-                                isPacketsCounterZero.signal();
-                                System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
-                            } catch (IllegalMonitorStateException e) {
-                                System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
-                            }
-                            //Without break for some reason does not exit
-                            if (packetsCounter[serverCell] == 2) {
-                                System.out.println(Thread.currentThread().threadId() + " in if (packetsCounter[serverCell] == 2) just before break");
-                                break;
-                            }
-                            System.out.println(Thread.currentThread().threadId() + " packetsCounter[serverCell]: " + packetsCounter[serverCell]);
+                    while (isInPacketsCounterLock[serverCell] == false && packetsCounter[serverCell] <= 2) {
+                        System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
+                        try {
+                            isPacketsCounterZero[serverCell].signal();
+                            System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
+                        } catch (IllegalMonitorStateException e) {
+                            System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
                         }
+                        //Without break for some reason does not exit
+                        if (packetsCounter[serverCell] == 2) {
+                            System.out.println(Thread.currentThread().threadId() + " in if (packetsCounter[serverCell] == 2) just before break");
+                            break;
+                        }
+                        System.out.println(Thread.currentThread().threadId() + " packetsCounter[serverCell]: " + packetsCounter[serverCell]);
+                    }
 
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
+                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
+                        */
+                    if (packetsCounter[serverCell] == counterForThisPacket) {
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
-                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
-                        */
-                        if (packetsCounter[serverCell] == counterForThisPacket) {
-                            try {
-                                Thread.sleep(50);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, work);
-                        sendRequest(6834, argumentForServer);
-                        waitServerToFinishThisRequest();
-                        changeNumberOfAvailableTokens( tokensWillBeUsed);
-                    } else {
-                        System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > -1");
-                        timeOfArrivalOfThisPacket = generateRandomNumber();
-                        System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
+                    }
+                    tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, work);
+                    sendRequest(6834, argumentForServer);
+                    waitServerToFinishThisRequest();
+                    changeNumberOfAvailableTokens( tokensWillBeUsed);
+                } else {
+                    System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > -1");
+                    timeOfArrivalOfThisPacket = generateRandomNumber();
+                    System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
                           Thus second thread's counterForThisPacket equals 1 and first's counterForThisPacket equals 2,
                           because it increases after second thread's, which is abnormal.
                         */
-                        if (packetsCounter[serverCell] == 0) {
+                    if (packetsCounter[serverCell] == 0) {
+                        try {
+                            isInPacketsCounterLock[serverCell] = true;
+                            System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
+                            packetsCounterLock[serverCell].lock();
+                            while (packetsCounter[serverCell] == 0) {
+                                System.out.println (Thread.currentThread().threadId() + " In while in lock");
+                                isPacketsCounterZero[serverCell].await();
+                            }
+                        } catch(InterruptedException e) {
+                            e.printStackTrace();
+                        } finally {
                             try {
-                                isInPacketsCounterLock = true;
-                                System.out.println (Thread.currentThread().threadId() + " isInPacketsCounterLock == " + isInPacketsCounterLock);
-                                packetsCounterLock.lock();
-                                while (packetsCounter[serverCell] == 0) {
-                                    System.out.println (Thread.currentThread().threadId() + " In while in lock");
-                                    isPacketsCounterZero.await();
-                                }
-                            } catch(InterruptedException e) {
+                                packetsCounterLock[serverCell].unlock();
+                            } catch (IllegalMonitorStateException e) {
                                 e.printStackTrace();
-                            } finally {
-                                try {
-                                    packetsCounterLock.unlock();
-                                } catch (IllegalMonitorStateException e) {
-                                    e.printStackTrace();
-                                }
                             }
                         }
-                        counterForThisPacket = increasePacketCounter();
-                        System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
-                        writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
+                    }
+                    counterForThisPacket = increasePacketCounter();
+                    System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
+                    writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
+                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
+                        */
+                    if (packetsCounter[serverCell] == counterForThisPacket) {
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
-                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
-                        */
-                        if (packetsCounter[serverCell] == counterForThisPacket) {
-                            try {
-                                Thread.sleep(50);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        int i = 0;
-                        do {
-                            try {
-                                Thread.sleep(100);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            i++;
-                            if (i == 1) {
-                                System.out.println (Thread.currentThread().threadId() + " in do while (tokens which will be used == 0)");
-                            }
-                            tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, work);
-                        } while (tokensWillBeUsed == 0);
-                        sendRequest(6834, argumentForServer);
-                        waitServerToFinishThisRequest();
-                        changeNumberOfAvailableTokens(tokensWillBeUsed);
                     }
+                    int i = 0;
+                    do {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        i++;
+                        if (i == 1) {
+                            System.out.println (Thread.currentThread().threadId() + " in do while (tokens which will be used == 0)");
+                        }
+                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, work);
+                    } while (tokensWillBeUsed == 0);
+                    sendRequest(6834, argumentForServer);
+                    waitServerToFinishThisRequest();
+                    changeNumberOfAvailableTokens(tokensWillBeUsed);
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -264,7 +257,7 @@ public class WorkScheduler {
                     else {
                         if ((work / (double) totalWorkOfTwoRequests[serverCell]) > 0.5) {
                             tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests[serverCell]) * 10);
-                            System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed);
+                            System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfTwoRequests[serverCell]);
                         } /*If work / (double) totalWorkOfTwoRequests < 0.1, (work / (double) totalWorkOfTwoRequests) * 10 < 1,
                         thus (int) (work / (double) totalWorkOfTwoRequests) is going to be 0 and this request is going to get zero 0.
                         So is not going to be executed. Thence if (work / (double) totalWorkOfTwoRequests) < 0.5,
@@ -272,7 +265,7 @@ public class WorkScheduler {
                       */
                         else {
                             tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests[serverCell]) * 10) + 1;
-                            System.out.println(Thread.currentThread().threadId() + " in if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed);
+                            System.out.println(Thread.currentThread().threadId() + " in if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfTwoRequests[serverCell]);
                         }
                         setTotalWorkOfTwoRequests (0);
                     }
