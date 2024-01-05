@@ -134,6 +134,14 @@ public class WorkScheduler {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                        if (packetsCounter[0] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[0]) {
+                            System.out.println (Thread.currentThread().threadId() + " in if (packetsCounter[0] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[0])");
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket);
                         sendRequest(6834, argumentForServer);
                         waitServerToFinishThisRequest();
@@ -173,6 +181,14 @@ public class WorkScheduler {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
+                        }
+                        if (packetsCounter[0] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[0]) {
+                            System.out.println (Thread.currentThread().threadId() + " in if (packetsCounter[0] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[0])");
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                         int i = 0;
                         do {
