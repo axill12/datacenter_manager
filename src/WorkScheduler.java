@@ -96,7 +96,7 @@ public class WorkScheduler {
                 } else {
                     serverCell = 2;
                 }
-                setTotalWorkOfTwoRequests(totalWorkOfTwoRequests[serverCell] + work);
+                setTotalWorkOfTwoRequests (work);
                 //If there aren't tokens waits till some are free.
                 if (buckets[serverCell] == 0) {
                     try {
@@ -159,7 +159,7 @@ public class WorkScheduler {
                         /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
                           enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
                         */
-                    if (packetsCounter[serverCell] == counterForThisPacket) {
+                    if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
@@ -209,7 +209,7 @@ public class WorkScheduler {
                         /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
                           enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
                         */
-                    if (packetsCounter[serverCell] == counterForThisPacket) {
+                    if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
@@ -332,9 +332,13 @@ public class WorkScheduler {
             return Math.abs(random.nextLong()) % 2 + 1703873804597L;
         }
 
-        public void setTotalWorkOfTwoRequests(int totalWorkOfTwoRequests) {
+        public void setTotalWorkOfTwoRequests(int work) {
             synchronized (Worker.class) {
-                WorkScheduler.totalWorkOfTwoRequests[serverCell] = totalWorkOfTwoRequests;
+                if (work == 0) {
+                    totalWorkOfTwoRequests[serverCell] = 0;
+                    return;
+                }
+                totalWorkOfTwoRequests[serverCell] += work;
             }
         }
     }
