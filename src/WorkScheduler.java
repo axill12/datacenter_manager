@@ -89,13 +89,13 @@ public class WorkScheduler {
                 }
 
                 //If there aren't tokens waits till some are free.
-                if (buckets[serverCell] == 0) {
+                /*if (buckets[serverCell] == 0) {
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         System.out.println ("Another thread interrupted this.");
                     }
-                }
+                }*/
                 int counterForThisPacket;
                 long timeOfArrivalOfThisPacket;
                 boolean isFP;
