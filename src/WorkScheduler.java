@@ -95,14 +95,7 @@ public class WorkScheduler {
                     serverCell = 2;
                 }
                 setTotalWorkOfTwoRequests (work);
-                //If there aren't tokens waits till some are free.
-                if (buckets[serverCell] == 0) {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        System.out.println ("Another thread interrupted this.");
-                    }
-                }
+
                 int counterForThisPacket;
                 long timeOfArrivalOfThisPacket;
                     /*If two packets arrive at same moment it is true, if it is false may one packet arrived and the last which wrote in timesOfArrivalOfPackets[cell] is itself.
