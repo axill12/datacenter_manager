@@ -38,7 +38,7 @@ public class WorkScheduler {
     private static Condition isPacketsCounterZero[] = new Condition[3];
 
     //Its first value is zero because I did not assign it a value.
-    private static int totalWorkOfTwoRequests[] = new int [3];
+    private static int totalWorkOfRequests[] = new int [3];
 
     public static void main (String args []) {
 
@@ -94,7 +94,7 @@ public class WorkScheduler {
                 } else {
                     serverCell = 2;
                 }
-                setTotalWorkOfTwoRequests (work);
+                setTotalWorkOfRequests (work);
 
                 int counterForThisPacket;
                 long timeOfArrivalOfThisPacket;
@@ -142,25 +142,11 @@ public class WorkScheduler {
                         System.out.println(Thread.currentThread().threadId() + " packetsCounter[serverCell]: " + packetsCounter[serverCell]);
                     }
 
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
-                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
-                        */
-                    if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, work);
+                    waitIfNecessary(counterForThisPacket, timeOfArrivalOfThisPacket);
+                    tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket, work);
                     sendRequest(6834, argumentForServer);
                     waitServerToFinishThisRequest();
-                    changeNumberOfAvailableTokens( tokensWillBeUsed);
+                    changeNumberOfAvailableTokens (tokensWillBeUsed);
                 } else {
                     System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > -1");
                     timeOfArrivalOfThisPacket = generateRandomNumber();
@@ -192,21 +178,8 @@ public class WorkScheduler {
                     counterForThisPacket = increasePacketCounter();
                     System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
                     writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
-                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
-                        */
-                    if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    waitIfNecessary(counterForThisPacket, timeOfArrivalOfThisPacket);
+
                     int i = 0;
                     do {
                         try {
@@ -218,7 +191,7 @@ public class WorkScheduler {
                         if (i == 1) {
                             System.out.println (Thread.currentThread().threadId() + " in do while (tokens which will be used == 0)");
                         }
-                        tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, counterForThisPacket, work);
+                        tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket, work);
                     } while (tokensWillBeUsed == 0);
                     sendRequest(6834, argumentForServer);
                     waitServerToFinishThisRequest();
@@ -230,11 +203,57 @@ public class WorkScheduler {
             }
         }
 
+        private int assignTokensTest (long timeOfArrivalOfThisPacket, int counterForThisPacket, int work) {
+            synchronized (Worker.class) {
+                long tap = timesOfArrivalOfPackets[serverCell];
+                System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[serverCell]: " + timesOfArrivalOfPackets[serverCell] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
+                int tokensWillBeUsed;
+                if (timeOfArrivalOfThisPacket == tap) {
+                    //If (work / (double) totalWorkOfTwoRequests[serverCell]) < 0.1 it would assign 0 tokens, due to use of (int) to calculation of tokensWillBeUsed.
+                    if ((work / (double) totalWorkOfRequests[serverCell]) < 0.1) {
+                        tokensWillBeUsed = 1;
+                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.2) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                    } else {
+                        tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10);
+                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.2) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                    }
+                    //If it is the last thread of requests which arrived at the same time give it all tokens.
+                    if (work == totalWorkOfRequests[serverCell]) {
+                        tokensWillBeUsed = buckets[serverCell];
+                        System.out.println(Thread.currentThread().threadId() + " in if (work == totalWorkOfRequests[serverCell]) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                    }
+                    setTotalWorkOfRequests(-1 * work);
+                } // else if timeOfArrivalOfThisPacket != tap
+                else {
+                    tokensWillBeUsed = buckets[serverCell];
+                    System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
+                }
+                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
+                return tokensWillBeUsed;
+            }
+
+        }
+
         private int assignTokens (long timeOfArrivalOfThisPacket, int counterForThisPacket, int work) {
             synchronized (Worker.class) {
                 long tap = timesOfArrivalOfPackets[serverCell];
                 System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[serverCell]: " + timesOfArrivalOfPackets[serverCell] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                 int tokensWillBeUsed;
+                if (timeOfArrivalOfThisPacket == tap) {
+                    //If (work / (double) totalWorkOfTwoRequests[serverCell]) < 0.1 it would assign 0 tokens, due to use of (int) to calculation of tokensWillBeUsed.
+                    if ((work / (double) totalWorkOfRequests[serverCell]) < 0.2) {
+                        tokensWillBeUsed = 1;
+                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.2) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                    } else {
+                        tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10);
+                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.2) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                    }
+                    setTotalWorkOfRequests(-1 * work);
+                } // else if timeOfArrivalOfThisPacket != tap
+                else {
+                    tokensWillBeUsed = buckets[serverCell];
+                    System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
+                }
                 if (timeOfArrivalOfThisPacket == tap) {
                     if (counterForThisPacket == packetsCounter[serverCell]) {
                         tokensWillBeUsed = buckets[serverCell];
@@ -242,23 +261,23 @@ public class WorkScheduler {
                       If it does not assign 0 to variable totalWorkOfTwoRequests may the requests of the next pair of requests
                       that will arrive at the same moment will not add their work to 0, because variable totalWorkOfTwoRequests is not 0.
                      */
-                        setTotalWorkOfTwoRequests (0);
+                        setTotalWorkOfRequests (0);
                         System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[serverCell]) tokens assigned: " + tokensWillBeUsed);
                     } //if counterForThisPacket + 1 == packetsCounter[serverCell]
                     else {
-                        if ((work / (double) totalWorkOfTwoRequests[serverCell]) > 0.5) {
-                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests[serverCell]) * 10);
-                            System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfTwoRequests[serverCell]);
+                        if ((work / (double) totalWorkOfRequests[serverCell]) > 0.5) {
+                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10);
+                            System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                         } /*If work / (double) totalWorkOfTwoRequests < 0.1, (work / (double) totalWorkOfTwoRequests) * 10 < 1,
                         thus (int) (work / (double) totalWorkOfTwoRequests) is going to be 0 and this request is going to get zero 0.
                         So is not going to be executed. Thence if (work / (double) totalWorkOfTwoRequests) < 0.5,
                         (int) (work / (double) totalWorkOfTwoRequests) + 1 is assigned to tokensWillBeUsed.
                       */
                         else {
-                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfTwoRequests[serverCell]) * 10) + 1;
-                            System.out.println(Thread.currentThread().threadId() + " in if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfTwoRequests[serverCell]);
+                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10) + 1;
+                            System.out.println(Thread.currentThread().threadId() + " in if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                         }
-                        setTotalWorkOfTwoRequests (0);
+                        setTotalWorkOfRequests (0);
                     }
                 } // else if timeOfArrivalOfThisPacket != tap
                 else {
@@ -323,13 +342,39 @@ public class WorkScheduler {
             return Math.abs(random.nextLong()) % 2 + 1703873804597L;
         }
 
-        public void setTotalWorkOfTwoRequests(int work) {
+        public void setTotalWorkOfRequests(int work) {
             synchronized (Worker.class) {
                 if (work == 0) {
-                    totalWorkOfTwoRequests[serverCell] = 0;
+                    totalWorkOfRequests[serverCell] = 0;
                     return;
                 }
-                totalWorkOfTwoRequests[serverCell] += work;
+                totalWorkOfRequests[serverCell] += work;
+            }
+        }
+
+        private void waitIfNecessary (int counterForThisPacket, long timeOfArrivalOfThisPacket) {
+            /*Many requests maybe come at the same moment.
+              It is necessary their threads to add their work to totalWorkOfTwoRequests[serverCell] before this one assigns tokens to itself.
+            */
+            while (packetsCounter[serverCell] == counterForThisPacket || timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
+                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
+                        */
+                if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }//Without this the thread of the last request of a bundle and requests which come solo would stick to this loop.
+                if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
+                    break;
+                }
             }
         }
     }

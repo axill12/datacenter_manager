@@ -4,21 +4,30 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Random;
 
 public class Client {
 
     public static void main (String args []) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        Random random = new Random();
+        random.setSeed(System.currentTimeMillis());
+        int randomInt;
         while (true) {
             try {
                 String userInput = reader.readLine();
-                if (userInput.equals("1")) {
-                    new Thread(new Worker("8888")).start();
-                } else if (userInput.equals("2")) {
-                    new Thread(new Worker("4444")).start();
-                    new Thread(new Worker("9999")).start();
-                } else if (userInput.equals("ex")) {
-                    break;
+
+                try {
+                    int input = Integer.parseInt(userInput);
+                    for (int i=0; i <input; i++) {
+                        randomInt = Math.abs(random.nextInt());
+                        //Creates a thread with a number from 0 to 9999.
+                        new Thread(new Worker(String.valueOf(randomInt % 10000))).start();
+                    }
+                } catch (NumberFormatException e) {
+                    if (userInput.equals("ex")) {
+                        return;
+                    } //If userInput is not ex next iteration starts because there are no other commands (e.g. if it is not number and ex).
                 }
             } catch (IOException e) {
                 e.printStackTrace();
