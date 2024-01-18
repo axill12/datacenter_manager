@@ -181,7 +181,7 @@ public class WorkScheduler {
                     waitIfNecessary(counterForThisPacket, timeOfArrivalOfThisPacket);
 
                     int i = 0;
-                    do {
+                    while (buckets[serverCell] == 0) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {
@@ -189,10 +189,11 @@ public class WorkScheduler {
                         }
                         i++;
                         if (i == 1) {
-                            System.out.println (Thread.currentThread().threadId() + " in do while (tokens which will be used == 0)");
+                            System.out.println (Thread.currentThread().threadId() + " in while (buckets[serverCell] == 0)");
                         }
-                        tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket, work);
-                    } while (tokensWillBeUsed == 0);
+                        System.out.println(Thread.currentThread().threadId() + " in while (buckets[serverCell] == 0) buckets[serverCell]: " + buckets[serverCell]);
+                    }
+                    tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, counterForThisPacket, work);
                     sendRequest(6834, argumentForServer);
                     waitServerToFinishThisRequest();
                     changeNumberOfAvailableTokens(tokensWillBeUsed);
@@ -212,22 +213,22 @@ public class WorkScheduler {
                     //If (work / (double) totalWorkOfTwoRequests[serverCell]) < 0.1 it would assign 0 tokens, due to use of (int) to calculation of tokensWillBeUsed.
                     if ((work / (double) totalWorkOfRequests[serverCell]) < 0.1) {
                         tokensWillBeUsed = 1;
-                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.2) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     } else {
                         tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10);
-                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.2) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
                     //If it is the last thread of requests which arrived at the same time give it all tokens.
                     if (work == totalWorkOfRequests[serverCell]) {
                         tokensWillBeUsed = buckets[serverCell];
                         System.out.println(Thread.currentThread().threadId() + " in if (work == totalWorkOfRequests[serverCell]) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
-                    setTotalWorkOfRequests(-1 * work);
                 } // else if timeOfArrivalOfThisPacket != tap
                 else {
                     tokensWillBeUsed = buckets[serverCell];
                     System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
                 }
+                setTotalWorkOfRequests(-1 * work);
                 changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
                 return tokensWillBeUsed;
             }
@@ -353,6 +354,7 @@ public class WorkScheduler {
         }
 
         private void waitIfNecessary (int counterForThisPacket, long timeOfArrivalOfThisPacket) {
+            int availableTokens = buckets[serverCell];
             /*Many requests maybe come at the same moment.
               It is necessary their threads to add their work to totalWorkOfTwoRequests[serverCell] before this one assigns tokens to itself.
             */
@@ -364,17 +366,18 @@ public class WorkScheduler {
                 }
                         /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
                           enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
+                          Without availableTokens > buckets[serverCell] does not enter this if because packetsCounter[serverCell] becomes bigger than counterForThisPacket.
                         */
-                if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
+                if ((packetsCounter[serverCell] == counterForThisPacket || availableTokens > buckets[serverCell]) && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
                     try {
                         Thread.sleep(50);
+                        //Without this the thread of the last request of a bundle and requests which come solo would stick to this loop.
+                        break;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                }//Without this the thread of the last request of a bundle and requests which come solo would stick to this loop.
-                if (packetsCounter[serverCell] == counterForThisPacket && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
-                    break;
                 }
+                System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
             }
         }
     }
