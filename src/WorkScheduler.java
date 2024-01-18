@@ -44,7 +44,7 @@ public class WorkScheduler {
 
         for (int i=0; i<3; i++) {
             buckets[i] = 10;
-            timesOfArrivalOfPackets[i] = -1;
+            timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
             isFirstPacket[i] = true;
             isInPacketsCounterLock[i] = false;
@@ -115,10 +115,10 @@ public class WorkScheduler {
 
                 //If it is the first packet it came to execute
                 if (isFP) {
-                    System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] == -1");
+                    System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] == 0");
                     timeOfArrivalOfThisPacket =  generateRandomNumber();
                     writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
-                    System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
+                    System.out.println (Thread.currentThread().threadId() + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                     counterForThisPacket = increasePacketCounter();
                     System.out.println (Thread.currentThread().threadId() + " counterForThisPacket: " + counterForThisPacket);
 
@@ -148,9 +148,9 @@ public class WorkScheduler {
                     waitServerToFinishThisRequest();
                     changeNumberOfAvailableTokens (tokensWillBeUsed);
                 } else {
-                    System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > -1");
+                    System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > 0");
                     timeOfArrivalOfThisPacket = generateRandomNumber();
-                    System.out.println (Thread.currentThread().threadId() + " " + timeOfArrivalOfThisPacket);
+                    System.out.println (Thread.currentThread().threadId() + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                         /*If lock and condition are not used, then the second thread that serves the second request,
                           reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
                           Thus second thread's counterForThisPacket equals 1 and first's counterForThisPacket equals 2,
@@ -337,10 +337,10 @@ public class WorkScheduler {
             }
         }
 
-        private static long generateRandomNumber () {
+        private long generateRandomNumber () {
             Random random = new Random();
             random.setSeed(System.currentTimeMillis());
-            return Math.abs(random.nextLong()) % 2 + 1703873804597L;
+            return Math.abs(random.nextLong()) % 2 + timesOfArrivalOfPackets[serverCell];
         }
 
         public void setTotalWorkOfRequests(int work) {
