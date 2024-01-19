@@ -227,6 +227,15 @@ public class WorkScheduler {
                     } else {
                         //Multiplication is done with buckets[serverCell] instead of 10 for the purpose of assigning the right amount of tokens if buckets[serverCell] < 10.
                         tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell]);
+                        /*Sometimes when a thread (not the first) executes (work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell] is less than 1,
+                          because work is subtracted from totalWorkOfRequests[serverCell] by the previous threads,
+                          so (work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell] is not completely accurate.
+                          In this block value 1 is given to tokensWillBeUsed.
+                        */
+                        if (tokensWillBeUsed == 0) {
+                            tokensWillBeUsed = 1;
+                            System.out.println(Thread.currentThread().threadId() + "in in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) in if (tokensWillBeUsed == 0)");
+                        }
                         System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
                     /*If (tokensWillBeUsed > buckets[serverCell]) correct tokensWillBeUsed.
