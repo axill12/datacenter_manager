@@ -124,7 +124,7 @@ public class WorkScheduler {
                 //If it is the first packet it came to execute
                 if (isFP) {
                     System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] == 0");
-                    timeOfArrivalOfThisPacket =  generateRandomNumber();
+                    timeOfArrivalOfThisPacket =  4596L;
                     writeTimeOfArrivalOfNewPacket(timeOfArrivalOfThisPacket);
                     System.out.println (Thread.currentThread().threadId() + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                     counterForThisPacket = increasePacketCounter();
@@ -158,7 +158,7 @@ public class WorkScheduler {
                     changeNumberOfAvailableTokens (tokensWillBeUsed);
                 } else {
                     System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > 0");
-                    timeOfArrivalOfThisPacket = generateRandomNumber();
+                    timeOfArrivalOfThisPacket = 4596L;
                     System.out.println (Thread.currentThread().threadId() + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                     long arrivalTimeOfPreviousRequest = timesOfArrivalOfPackets[serverCell];
                         /*If lock and condition are not used, then the second thread that serves the second request,
@@ -225,10 +225,15 @@ public class WorkScheduler {
                         tokensWillBeUsed = 1;
                         System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     } else {
+                        //Multiplication is done with buckets[serverCell] instead of 10 for the purpose of assigning the right amount of tokens if buckets[serverCell] < 10.
                         tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell]);
                         System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
-                    //If (tokensWillBeUsed > buckets[serverCell]) correct tokensWillBeUsed.
+                    /*If (tokensWillBeUsed > buckets[serverCell]) correct tokensWillBeUsed.
+                      This exists because (work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell] becomes slightly different
+                      when another thread subtracts its work from totalWorkOfRequests[serverCell]
+                      than (work / (double) totalWorkOfRequests[serverCell]) * 10 when work of other thread is not subtracted.
+                    */
                     if (tokensWillBeUsed > buckets[serverCell]) {
                         while (buckets[serverCell] == 0) {
                             tokensWillBeUsed = buckets[serverCell];
@@ -370,9 +375,7 @@ public class WorkScheduler {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                        /*Without it sometimes the thread of the first request of a pair whose requests arrive at the same moment
-                          enters if (counterForThisPacket == packetsCounter[serverCell]) and takes all tokens.
-                          Without availableTokens > buckets[serverCell] does not enter this if because packetsCounter[serverCell] becomes bigger than counterForThisPacket.
+                        /*Without availableTokens > buckets[serverCell] does not enter this if because packetsCounter[serverCell] becomes bigger than counterForThisPacket.
                           availableTokens > buckets[serverCell] means another thread used some tokens.
                         */
                 if ((packetsCounter[serverCell] == counterForThisPacket || availableTokens > buckets[serverCell]) && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
