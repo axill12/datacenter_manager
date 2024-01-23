@@ -50,7 +50,7 @@ public class WorkScheduler {
     public static void main (String args []) {
 
         for (int i=0; i<3; i++) {
-            buckets[i] = 10;
+            buckets[i] = 20;
             timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
             isFirstPacket[i] = true;
@@ -152,20 +152,20 @@ public class WorkScheduler {
 
                     waitIfNecessary(counterForThisPacket, timeOfArrivalOfThisPacket);
                     //Invalid value is passed for arrivalTimeOfPreviousRequest, because no request came before.
-                    tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, -1, counterForThisPacket, work);
+                    tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, -1, work);
                     sendRequest(6834, argumentForServer);
-                    waitServerToFinishThisRequest();
+                    waitServerToFinishThisRequest(work);
                     changeNumberOfAvailableTokens (tokensWillBeUsed);
                 } else {
                     System.out.println (Thread.currentThread().threadId() + " in timesOfArrivalOfPackets[serverCell] > 0");
                     timeOfArrivalOfThisPacket = 4596L;
                     System.out.println (Thread.currentThread().threadId() + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                     long arrivalTimeOfPreviousRequest = timesOfArrivalOfPackets[serverCell];
-                        /*If lock and condition are not used, then the second thread that serves the second request,
-                          reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
-                          Thus second thread's counterForThisPacket equals 1 and first's counterForThisPacket equals 2,
-                          because it increases after second thread's, which is abnormal.
-                        */
+                    /*If lock and condition are not used, then the second thread that serves the second request,
+                      reaches first the line counterForThisPacket = increasePacketCounter();, packetsCounter is still 0 and increases to 1.
+                      Thus second thread's counterForThisPacket equals 1 and first's counterForThisPacket equals 2,
+                      because it increases after second thread's, which is abnormal.
+                    */
                     if (packetsCounter[serverCell] == 0) {
                         try {
                             isInPacketsCounterLock[serverCell] = true;
@@ -203,9 +203,9 @@ public class WorkScheduler {
                         }
                         System.out.println(Thread.currentThread().threadId() + " in while (buckets[serverCell] == 0) buckets[serverCell]: " + buckets[serverCell]);
                     }
-                    tokensWillBeUsed = assignTokensTest(timeOfArrivalOfThisPacket, arrivalTimeOfPreviousRequest, counterForThisPacket, work);
+                    tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivalTimeOfPreviousRequest, work);
                     sendRequest(6834, argumentForServer);
-                    waitServerToFinishThisRequest();
+                    waitServerToFinishThisRequest(work);
                     changeNumberOfAvailableTokens(tokensWillBeUsed);
                 }
 
@@ -214,7 +214,7 @@ public class WorkScheduler {
             }
         }
 
-        private int assignTokensTest (long timeOfArrivalOfThisPacket, long arrivalTimeOfPreviousRequest, int counterForThisPacket, int work) {
+        private int assignTokens (long timeOfArrivalOfThisPacket, long arrivalTimeOfPreviousRequest, int work) {
             synchronized (Worker.class) {
                 long tap = timesOfArrivalOfPackets[serverCell];
                 System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[serverCell]: " + timesOfArrivalOfPackets[serverCell] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
@@ -261,47 +261,6 @@ public class WorkScheduler {
 
         }
 
-        private int assignTokens (long timeOfArrivalOfThisPacket, int counterForThisPacket, int work) {
-            synchronized (Worker.class) {
-                long tap = timesOfArrivalOfPackets[serverCell];
-                System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[serverCell]: " + timesOfArrivalOfPackets[serverCell] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
-                int tokensWillBeUsed;
-                if (timeOfArrivalOfThisPacket == tap) {
-                    if (counterForThisPacket == packetsCounter[serverCell]) {
-                        tokensWillBeUsed = buckets[serverCell];
-                    /*If two requests arrive at the same time, the second enters this if.
-                      If it does not assign 0 to variable totalWorkOfTwoRequests may the requests of the next pair of requests
-                      that will arrive at the same moment will not add their work to 0, because variable totalWorkOfTwoRequests is not 0.
-                     */
-                        setTotalWorkOfRequests (0);
-                        System.out.println(Thread.currentThread().threadId() + " in else if (counterForThisPacket == packetsCounter[serverCell]) tokens assigned: " + tokensWillBeUsed);
-                    } //if counterForThisPacket + 1 == packetsCounter[serverCell]
-                    else {
-                        if ((work / (double) totalWorkOfRequests[serverCell]) > 0.5) {
-                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10);
-                            System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) > 0.5) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
-                        } /*If work / (double) totalWorkOfTwoRequests < 0.1, (work / (double) totalWorkOfTwoRequests) * 10 < 1,
-                        thus (int) (work / (double) totalWorkOfTwoRequests) is going to be 0 and this request is going to get zero 0.
-                        So is not going to be executed. Thence if (work / (double) totalWorkOfTwoRequests) < 0.5,
-                        (int) (work / (double) totalWorkOfTwoRequests) + 1 is assigned to tokensWillBeUsed.
-                      */
-                        else {
-                            tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * 10) + 1;
-                            System.out.println(Thread.currentThread().threadId() + " in if (work / (double) totalWorkOfTwoRequests) <= 0.5 tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
-                        }
-                        setTotalWorkOfRequests (0);
-                    }
-                } // else if timeOfArrivalOfThisPacket != tap
-                else {
-                    tokensWillBeUsed = buckets[serverCell];
-                    System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
-                }
-                changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
-                return tokensWillBeUsed;
-            }
-
-        }
-
         /*Return packetsCounter[index] a method variable can store this value.
          If it didn't return it, packetsCounter[cell] could be changed by another thread and method variable wouldn't store wright value.
          */
@@ -340,9 +299,9 @@ public class WorkScheduler {
         }
 
         //Wait the interval server needs to finish the task this request asked server to do. I suppose arbitrarily this interval is 2500 ms for all requests in all servers.
-        private static void waitServerToFinishThisRequest () {
+        private static void waitServerToFinishThisRequest (int work) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(work);
             } catch (InterruptedException e) {
                 System.out.println ("Another thread interrupted this.");
             }

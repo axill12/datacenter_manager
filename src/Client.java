@@ -21,8 +21,8 @@ public class Client {
                     int input = Integer.parseInt(userInput);
                     for (int i=0; i <input; i++) {
                         randomInt = Math.abs(random.nextInt());
-                        //Creates a thread with a number from 0 to 9999.
-                        new Thread(new Worker(String.valueOf(randomInt % 10000))).start();
+                        //Creates a thread with a number from 1 to 10000.
+                        new Thread(new Worker(String.valueOf(1 + randomInt % 10000))).start();
                     }
                 } catch (NumberFormatException e) {
                     if (userInput.equals("ex")) {
