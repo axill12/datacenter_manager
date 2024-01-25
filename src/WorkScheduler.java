@@ -12,44 +12,44 @@ public class WorkScheduler {
       The second cell represents the current number of tokens Server2's bucket has.
       The third is for Server2.
     */
-    private static int buckets [] = new int [3];
+    private static int buckets [] = new int [7];
 
     /*Here are stored the arrival times of last packets which arrived for each server.
     The first cell hold times for Server1, the second for Server2 and the third for Server3.
     When WorkScheduler starts assigns -1 to all cells in main method,
     so if scheduler in run method notice a cell contains -1 it knows no packet for the corresponding server has written its arrival time.
      */
-    private static long timesOfArrivalOfPackets [] = new long [3];
+    private static long timesOfArrivalOfPackets [] = new long [7];
 
     /*Counts the packets arrived per server because if subtraction is zero,
     it may be because no packet arrived and the last request subtract its arrival time with its arrival time.
      */
-    private static int packetsCounter[] = new int [3];
+    private static int packetsCounter[] = new int [7];
 
     /*If it is the first packet is true. Without the first two threads may enter both at if (timesOfArrivalOfPackets[serverCell] == -1)
       because timesOfArrivalOfPackets[serverCell] didn't have time to change.
     */
-    private static boolean isFirstPacket[] = new boolean [3];
+    private static boolean isFirstPacket[] = new boolean [7];
 
-    private static volatile boolean isInPacketsCounterLock[] = new boolean[3];
+    private static volatile boolean isInPacketsCounterLock[] = new boolean[7];
 
-    private static ReentrantLock packetsCounterLock[] = new ReentrantLock[3];
+    private static ReentrantLock packetsCounterLock[] = new ReentrantLock[7];
 
-    private static Condition isPacketsCounterZero[] = new Condition[3];
+    private static Condition isPacketsCounterZero[] = new Condition[7];
 
     //Its first value is zero because I did not assign it a value.
-    private static int totalWorkOfRequests[] = new int [3];
+    private static int totalWorkOfRequests[] = new int [7];
 
     /*This variable contains the last time method generateRandomNumber executed.
       If the previous bundle's last request had the same arrival time with the first request of the next bundle
       the thread of first request of new bundle would assume the lats request of previous bundle belongs to his bundle,
       because they would have the same arrival time. Thus, this variable is necessary only because of the dummy way arrival times are produced.
     */
-    private static long execTimeOfGenerator[] = new long [3];
+    private static long execTimeOfGenerator[] = new long [7];
 
     public static void main (String args []) {
 
-        for (int i=0; i<3; i++) {
+        for (int i=0; i<7; i++) {
             buckets[i] = 20;
             timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
@@ -94,13 +94,12 @@ public class WorkScheduler {
                     return;
                 }
 
-                String nameOfClassOfServer = reader.readLine();
-                if (nameOfClassOfServer.endsWith("1")) {
-                    serverCell = 0;
-                } else if (nameOfClassOfServer.endsWith("2")) {
-                    serverCell = 1;
-                } else {
-                    serverCell = 2;
+                String idOfServer = reader.readLine();
+                try {
+                    serverCell = Integer.parseInt(idOfServer) - 1;
+                } catch (NumberFormatException nfe) {
+                    System.out.println("The id of the server you provided, it is not number. This server does not exist. This request is not going to be sent to any server.");
+                    return;
                 }
                 setTotalWorkOfRequests (work);
 
@@ -153,7 +152,7 @@ public class WorkScheduler {
                     waitIfNecessary(counterForThisPacket, timeOfArrivalOfThisPacket);
                     //Invalid value is passed for arrivalTimeOfPreviousRequest, because no request came before.
                     tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, -1, work);
-                    sendRequest(6834, argumentForServer);
+                    sendRequest(6834 + serverCell, argumentForServer);
                     waitServerToFinishThisRequest(work);
                     changeNumberOfAvailableTokens (tokensWillBeUsed);
                 } else {
@@ -204,7 +203,7 @@ public class WorkScheduler {
                         System.out.println(Thread.currentThread().threadId() + " in while (buckets[serverCell] == 0) buckets[serverCell]: " + buckets[serverCell]);
                     }
                     tokensWillBeUsed = assignTokens(timeOfArrivalOfThisPacket, arrivalTimeOfPreviousRequest, work);
-                    sendRequest(6834, argumentForServer);
+                    sendRequest(6834 + serverCell, argumentForServer);
                     waitServerToFinishThisRequest(work);
                     changeNumberOfAvailableTokens(tokensWillBeUsed);
                 }
@@ -280,6 +279,7 @@ public class WorkScheduler {
         }
 
         private static void sendRequest (int port, String argumentForServer) {
+            System.out.println(Thread.currentThread().threadId() + " port: " + port);
             try (Socket socket = new Socket("localhost", port)) {
                 PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
                 writer.println(argumentForServer);

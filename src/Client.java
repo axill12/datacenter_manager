@@ -8,6 +8,7 @@ import java.util.Random;
 
 public class Client {
 
+    //User should write in same line first the id of the server , to which desires to reach his request and then the parameter for server.
     public static void main (String args []) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         Random random = new Random();
@@ -15,14 +16,15 @@ public class Client {
         int randomInt;
         while (true) {
             try {
-                String userInput = reader.readLine();
+                String userInput [] = new String [2];
+                userInput = reader.readLine().split(" ");
 
                 try {
-                    int input = Integer.parseInt(userInput);
-                    for (int i=0; i <input; i++) {
+                    int numOfRequests = Integer.parseInt(userInput[1]);
+                    for (int i=0; i < numOfRequests; i++) {
                         randomInt = Math.abs(random.nextInt());
-                        //Creates a thread with a number from 1 to 10000.
-                        new Thread(new Worker(String.valueOf(1 + randomInt % 10000))).start();
+                        //Creates a thread with the id of the server, to which this requests must reach, and a number from 1 to 10000.
+                        new Thread(new Worker(userInput[0], String.valueOf(1 + randomInt % 10000))).start();
                     }
                 } catch (NumberFormatException e) {
                     if (userInput.equals("ex")) {
@@ -37,9 +39,12 @@ public class Client {
 
     private static class Worker implements Runnable {
 
+        private String idOfServer;
+
         private String argumentForServer;
 
-        private Worker (String argumentForServer) {
+        private Worker (String idOfServer, String argumentForServer) {
+            this.idOfServer = idOfServer;
             this.argumentForServer = argumentForServer;
         }
 
@@ -47,7 +52,7 @@ public class Client {
             try (Socket socket = new Socket("localhost", 7169)) {
                 PrintWriter writer = new PrintWriter (socket.getOutputStream(), true);
                 writer.println(argumentForServer);
-                writer.println("Server1");
+                writer.println(idOfServer);
                 writer.close();
             } catch (UnknownHostException e) {
                 e.printStackTrace();
