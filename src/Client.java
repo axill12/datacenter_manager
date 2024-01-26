@@ -14,9 +14,10 @@ public class Client {
         Random random = new Random();
         random.setSeed(System.currentTimeMillis());
         int randomInt;
+        String userInput [];
         while (true) {
             try {
-                String userInput [] = new String [2];
+                userInput = new String [2];
                 userInput = reader.readLine().split(" ");
 
                 try {
