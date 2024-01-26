@@ -26,8 +26,8 @@ public class ContainerManager {
                 command [2] = reader.readLine();
                 matcher = pattern.matcher(command [2]);
                 notContainsOnlyDigits = matcher.find();
-                if (notContainsOnlyDigits) {
-                    System.out.println ("The id of server user provided does not contains only digits. His demand cannot be served.");
+                if (notContainsOnlyDigits || command[2].isEmpty()) {
+                    System.out.println ("The id of server user provided does not contains only digits or contains nothing. His demand cannot be served.");
                     continue;
                 }
                 Runtime.getRuntime().exec(command, null, new File("/home/rtds/IdeaProjects/WorkloadCompactor_improvement"));
