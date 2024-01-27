@@ -60,25 +60,28 @@ public class WorkScheduler {
             execTimeOfGenerator[i] = 0;
         }
 
+        WorkerForContainers workerForContainers = new WorkerForContainers();
+        new Thread(workerForContainers).start();
+
         try (ServerSocket server = new ServerSocket((7169))) {
             while (true) {
                 //Listens to requests for connection from client.
                 Socket client = server.accept();
-                Worker worker = new Worker(client);
-                new Thread(worker).start();
+                WorkerForRequests workerForRequests = new WorkerForRequests(client);
+                new Thread(workerForRequests).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static class Worker implements Runnable {
+    private static class WorkerForRequests implements Runnable {
 
         private final Socket client;
 
         private int serverCell;
 
-        public Worker (Socket client) {
+        public WorkerForRequests (Socket client) {
             this.client = client;
         }
 
@@ -112,7 +115,7 @@ public class WorkScheduler {
                 boolean isFP;
                 int tokensWillBeUsed;
 
-                synchronized (Worker.class) {
+                synchronized (WorkerForRequests.class) {
                     isFP = isFirstPacket[serverCell];
                     //It changes it, so the next packet will know it is not the first packet.
                     if (isFP) {
@@ -214,7 +217,7 @@ public class WorkScheduler {
         }
 
         private int assignTokens (long timeOfArrivalOfThisPacket, long arrivalTimeOfPreviousRequest, int work) {
-            synchronized (Worker.class) {
+            synchronized (WorkerForRequests.class) {
                 long tap = timesOfArrivalOfPackets[serverCell];
                 System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[serverCell]: " + timesOfArrivalOfPackets[serverCell] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                 int tokensWillBeUsed;
@@ -264,7 +267,7 @@ public class WorkScheduler {
          If it didn't return it, packetsCounter[cell] could be changed by another thread and method variable wouldn't store wright value.
          */
         private int increasePacketCounter () {
-            synchronized (Worker.class) {
+            synchronized (WorkerForRequests.class) {
                 return ++packetsCounter[serverCell];
             }
         }
@@ -273,7 +276,7 @@ public class WorkScheduler {
          If it didn't return it, timesOfArrivalOfPackets[cell] could be changed by another thread and method variable wouldn't store wright value.
          */
         private void writeTimeOfArrivalOfNewPacket (long timeOfArrivalOfThisPacket) {
-            synchronized (Worker.class) {
+            synchronized (WorkerForRequests.class) {
                 timesOfArrivalOfPackets[serverCell] = timeOfArrivalOfThisPacket;
             }
         }
@@ -293,7 +296,7 @@ public class WorkScheduler {
 
         //If it is used for binding tokens to a request tokensWillBeUsed should be the number of tokens that are necessary to bind with minus sign to subtract tokens.
         private void changeNumberOfAvailableTokens (int tokens) {
-            synchronized (Worker.class) {
+            synchronized (WorkerForRequests.class) {
                 buckets[serverCell] += tokens;
             }
         }
@@ -323,7 +326,7 @@ public class WorkScheduler {
         }
 
         public void setTotalWorkOfRequests(int work) {
-            synchronized (Worker.class) {
+            synchronized (WorkerForRequests.class) {
                 if (work == 0) {
                     totalWorkOfRequests[serverCell] = 0;
                     return;
@@ -358,6 +361,23 @@ public class WorkScheduler {
                 System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
             }
         }
+    }
+
+    private static class WorkerForContainers implements Runnable {
+
+        public void run () {
+            try (ServerSocket server = new ServerSocket((7168))) {
+                Socket client;
+                while (true) {
+                    //Listens to requests for connection from client.
+                    client = server.accept();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 }
