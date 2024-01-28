@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -213,6 +214,12 @@ public class WorkScheduler {
 
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    client.close();
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
             }
         }
 
@@ -367,11 +374,21 @@ public class WorkScheduler {
 
         public void run () {
             try (ServerSocket server = new ServerSocket((7168))) {
-                Socket client;
+                Socket receiver, sender;
+                int idOfServer;
+                BufferedReader reader;
+                PrintWriter writer;
                 while (true) {
                     //Listens to requests for connection from client.
-                    client = server.accept();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                    receiver = server.accept();
+                    reader = new BufferedReader(new InputStreamReader(receiver.getInputStream()));
+                    idOfServer = Integer.parseInt(reader.readLine());
+                    System.out.println(Thread.currentThread().threadId() + " idOfServer: " + idOfServer);
+                    sender = new Socket("localhost", 7171);
+                    writer = new PrintWriter(sender.getOutputStream(), true);
+                    writer.println("yes");
+                    writer.close();
+                    sender.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
