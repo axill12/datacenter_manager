@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -15,15 +16,20 @@ public class ContainerCommandSender {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String userInput [];
         while (true) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
             try (Socket socket = new Socket ("localhost", 7170);
                  PrintWriter writer = new PrintWriter (socket.getOutputStream(), true)){
-                userInput = new String [2];
+                userInput = new String[2];
                 userInput = reader.readLine().split(" ");
-                System.out.println ("userInput[0]: " + userInput[0]);
                 if (userInput[0].equals("ex")) {
                     return;
                 }
                 writer.println(userInput[0]);
+                writer.println(userInput[1]);
             } catch (UnknownHostException e) {
                 System.out.println("It cannot find the host.");
             } catch (IOException e) {

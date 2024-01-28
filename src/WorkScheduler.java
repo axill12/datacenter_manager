@@ -2,7 +2,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.Buffer;
 import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,6 +47,19 @@ public class WorkScheduler {
     */
     private static long execTimeOfGenerator[] = new long [7];
 
+    /*Each server in datacenter, which hosts applications, can distribute a specific number of tokens to applications it houses.
+          When a new application is hosted totalAvailableTokens are reduced, depending on its Service Level Objective (SLO).
+        */
+    private static int totalAvailableTokens = 50;
+
+    public static int getTotalAvailableTokens() {
+        return totalAvailableTokens;
+    }
+
+    public static void setTotalAvailableTokens(int totalAvailableTokens) {
+        WorkScheduler.totalAvailableTokens = totalAvailableTokens;
+    }
+
     public static void main (String args []) {
 
         for (int i=0; i<7; i++) {
@@ -60,9 +72,6 @@ public class WorkScheduler {
             isPacketsCounterZero[i] = packetsCounterLock[i].newCondition();
             execTimeOfGenerator[i] = 0;
         }
-
-        WorkerForContainers workerForContainers = new WorkerForContainers();
-        new Thread(workerForContainers).start();
 
         try (ServerSocket server = new ServerSocket((7169))) {
             while (true) {
@@ -368,33 +377,6 @@ public class WorkScheduler {
                 System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
             }
         }
-    }
-
-    private static class WorkerForContainers implements Runnable {
-
-        public void run () {
-            try (ServerSocket server = new ServerSocket((7168))) {
-                Socket receiver, sender;
-                int idOfServer;
-                BufferedReader reader;
-                PrintWriter writer;
-                while (true) {
-                    //Listens to requests for connection from client.
-                    receiver = server.accept();
-                    reader = new BufferedReader(new InputStreamReader(receiver.getInputStream()));
-                    idOfServer = Integer.parseInt(reader.readLine());
-                    System.out.println(Thread.currentThread().threadId() + " idOfServer: " + idOfServer);
-                    sender = new Socket("localhost", 7171);
-                    writer = new PrintWriter(sender.getOutputStream(), true);
-                    writer.println("yes");
-                    writer.close();
-                    sender.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 
 }
