@@ -64,7 +64,7 @@ public class ContainerManager  {
                     System.out.println("totalAvailableTokens: " + WorkScheduler.getTotalAvailableTokens());
 
                     //TODO na topothetei thn efarmogh sto buckets[serverCell]
-                    ServerInformations info = new ServerInformations(1, 2);
+
 
 
                 } else {
