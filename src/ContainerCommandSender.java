@@ -16,11 +16,6 @@ public class ContainerCommandSender {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String userInput [];
         while (true) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
             try (Socket socket = new Socket ("localhost", 7170);
                  PrintWriter writer = new PrintWriter (socket.getOutputStream(), true)){
                 userInput = new String[2];

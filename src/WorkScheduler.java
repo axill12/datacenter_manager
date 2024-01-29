@@ -63,7 +63,7 @@ public class WorkScheduler {
     public static void main (String args []) {
 
         for (int i=0; i<7; i++) {
-            buckets[i] = 20;
+            buckets[i] = -1;
             timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
             isFirstPacket[i] = true;
@@ -377,6 +377,12 @@ public class WorkScheduler {
                 System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
             }
         }
+    }
+
+    //When a new application is installed with this function buckets[positionOfServer] is initiated with application's capacity of tokes.
+    static void initiateBucket (int positionOfServer, int necessaryTokens) {
+        buckets[positionOfServer] = necessaryTokens;
+        System.out.println("Its position is: " + positionOfServer + " buckets[" + positionOfServer + "]: " + buckets[positionOfServer]);
     }
 
 }

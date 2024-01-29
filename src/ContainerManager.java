@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 public class ContainerManager  {
 
+    private static int capacityOfBuckets [] = new int [7];
+
     public static void main (String args[]) {
         Socket receiver;
         BufferedReader reader;
@@ -19,27 +21,45 @@ public class ContainerManager  {
         command[0] = "sh";
         command[1] = "installer_test.sh";
 
+        int idOfServer;
         Pattern pattern = Pattern.compile("[^0-9]+");
         Matcher matcher;
         boolean notContainsOnlyDigits;
 
+        String secondParameter;
         int SLO;
         int necessaryTokens;
 
         List<ServerInformations> listOfServers = new ArrayList<>();
+        for (int i=0; i < 7; i++) {
+            capacityOfBuckets[i] = -1;
+        }
+        //Position of server in capacityOfBuckets and buckets of WorkScheduler.
+        int positionOfServer;
 
         try (ServerSocket server = new ServerSocket(7170)) {
             while (true) {
                 receiver = server.accept();
-                reader = new BufferedReader (new InputStreamReader(receiver.getInputStream()));
+                reader = new BufferedReader(new InputStreamReader(receiver.getInputStream()));
+                //command[2] that user sends is the id of server, which wish to be installed.
                 command[2] = reader.readLine();
-                matcher = pattern.matcher(command [2]);
+                matcher = pattern.matcher(command[2]);
                 notContainsOnlyDigits = matcher.find();
                 if (notContainsOnlyDigits || command[2].isEmpty()) {
-                    System.out.println ("The id of server user provided does not contains only digits or contains nothing. His demand cannot be served.");
+                    System.out.println("The id of server user provided does not contains only digits or contains nothing. His demand cannot be served.");
                     continue;
                 }
 
+                idOfServer = Integer.parseInt(command[2]);
+                secondParameter = reader.readLine();
+                if (secondParameter.equals("r")) {
+                    //TODO remove function
+                } else if () {//TODO if secondParameter is SLO
+
+                } else {
+                  System.out.println ("The second parameter user wrote does not contain only digits and it is not r. Thus is wrong. His request cannot be satisfied.");
+                  continue;
+                }
                 SLO = Integer.parseInt(reader.readLine());
                 /*For a few values of SLO (10.0 / SLO) * 50 computes the equivalent of (int) ((10.0 / SLO) * 50) * 1.0,
                   meaning (10.0 / SLO) * 50 does not have values like 25.04 or 25.3.
@@ -63,9 +83,9 @@ public class ContainerManager  {
                     }
                     System.out.println("totalAvailableTokens: " + WorkScheduler.getTotalAvailableTokens());
 
-                    //TODO na topothetei thn efarmogh sto buckets[serverCell]
-
-
+                    positionOfServer = placeContainerInCapacityOfBuckets(necessaryTokens);
+                    listOfServers.add(new ServerInformations(idOfServer, positionOfServer));
+                    WorkScheduler.initiateBucket(positionOfServer, necessaryTokens);
 
                 } else {
                     System.out.println("This server does not have enough tokens to serve this container suitably.");
@@ -82,6 +102,18 @@ public class ContainerManager  {
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
+    }
+
+    /*Assigns the total tokens every application, which is going to be installed, is going to have available in the first empty cell of capacityOfBuckets it discovers
+      and returns the index of cell where number of total tokens is stored for the purpose of using it with buckets of WorkScheduler.
+    */
+    private static int placeContainerInCapacityOfBuckets (int necessaryTokens) {
+        int i = 0;
+        do {
+            i++;
+        } while (i < 7 && capacityOfBuckets[i - 1] != -1);
+        capacityOfBuckets[i - 1] = necessaryTokens;
+        return i - 1;
     }
 
     //Holds the id of each server, which is placed in real computer and its position in buckets array of WorkScheduler.
