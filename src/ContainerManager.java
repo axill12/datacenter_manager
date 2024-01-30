@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,9 +18,10 @@ public class ContainerManager  {
 
         String[] command = new String[3];
         command[0] = "sh";
-        command[1] = "installer_test.sh";
+        command[1] = "ContainerInstaller.sh";
 
-        int idOfServer;
+        //If I do not initialize idOfServer shows error in try.
+        int idOfServer = -1;
         Pattern pattern = Pattern.compile("[^0-9]+");
         Matcher matcher;
         boolean notContainsOnlyDigits;
@@ -30,7 +30,7 @@ public class ContainerManager  {
         int SLO;
         int necessaryTokens;
 
-        List<ServerInformations> listOfServers = new ArrayList<>();
+        ArrayList<ServerInformations> listOfServers = new ArrayList<>();
         for (int i=0; i < 7; i++) {
             capacityOfBuckets[i] = -1;
         }
@@ -49,47 +49,25 @@ public class ContainerManager  {
                     System.out.println("The id of server user provided does not contains only digits or contains nothing. His demand cannot be served.");
                     continue;
                 }
-
-                idOfServer = Integer.parseInt(command[2]);
+                try {
+                    idOfServer = Integer.parseInt(command[2]);
+                }  catch (NumberFormatException nfe) {
+                    System.out.println("User provided id of server, which is not in number format.");
+                    continue;
+                }
                 secondParameter = reader.readLine();
+                matcher = pattern.matcher(secondParameter);
+                notContainsOnlyDigits = matcher.find();
                 if (secondParameter.equals("r")) {
                     //TODO remove function
-                } else if () {//TODO if secondParameter is SLO
-
+                } else if (!notContainsOnlyDigits) {//TODO if secondParameter is SLO
+                    SLO = Integer.parseInt(secondParameter);
+                    initiateServer(SLO, command, listOfServers, idOfServer);
                 } else {
                   System.out.println ("The second parameter user wrote does not contain only digits and it is not r. Thus is wrong. His request cannot be satisfied.");
                   continue;
                 }
-                SLO = Integer.parseInt(reader.readLine());
-                /*For a few values of SLO (10.0 / SLO) * 50 computes the equivalent of (int) ((10.0 / SLO) * 50) * 1.0,
-                  meaning (10.0 / SLO) * 50 does not have values like 25.04 or 25.3.
-                  Though if necessaryTokens are assigned always the value of (int) ((10.0 / SLO) * 50) + 1 in above case it takes value higher by 1 than it should have
-                  e.g. for SLO = 20 instead of 25 it is assigned 26, because of + 1.
-                */
-                if ((10.0 / SLO) * 50 == (int) ((10.0 / SLO) * 50) * 1.0) {
-                    necessaryTokens = (int) ((10.0 / SLO) * 50);
-                } else {
-                    necessaryTokens = (int) ((10.0 / SLO) * 50) + 1;
-                }
 
-                //It is better applications to be able to serve 7 requests simultaneously. That is the reason WorkScheduler.getTotalAvailableTokens() >= 7 is applied.
-                if (necessaryTokens <= WorkScheduler.getTotalAvailableTokens() && WorkScheduler.getTotalAvailableTokens() >= 7) {
-                    Runtime.getRuntime().exec(command, null, new File("/home/rtds/IdeaProjects/WorkloadCompactor_improvement"));
-                    //Assigns at least 7 tokens. So that, can serve simultaneously at least 7 tokens.
-                    if (necessaryTokens > 7) {
-                        WorkScheduler.setTotalAvailableTokens(WorkScheduler.getTotalAvailableTokens() - necessaryTokens);
-                    } else {
-                        WorkScheduler.setTotalAvailableTokens(WorkScheduler.getTotalAvailableTokens() - 7);
-                    }
-                    System.out.println("totalAvailableTokens: " + WorkScheduler.getTotalAvailableTokens());
-
-                    positionOfServer = placeContainerInCapacityOfBuckets(necessaryTokens);
-                    listOfServers.add(new ServerInformations(idOfServer, positionOfServer));
-                    WorkScheduler.initiateBucket(positionOfServer, necessaryTokens);
-
-                } else {
-                    System.out.println("This server does not have enough tokens to serve this container suitably.");
-                }
                 reader.close();
                 receiver.close();
             }
@@ -97,11 +75,51 @@ public class ContainerManager  {
             e.printStackTrace();
         } catch (SecurityException e) {
             e.printStackTrace();
-        } catch (NumberFormatException nfe) {
-            System.out.println("User provided SLO, which is not in number format.");
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void initiateServer (int SLO, String command [], ArrayList<ServerInformations> listOfServers, int idOfServer) {
+        int necessaryTokens = computeNecessaryTokens(SLO);
+        int positionOfServer;
+
+        //It is better applications to be able to serve 7 requests simultaneously. That is the reason WorkScheduler.getTotalAvailableTokens() >= 7 is applied.
+        if (necessaryTokens <= WorkScheduler.getTotalAvailableTokens() && WorkScheduler.getTotalAvailableTokens() >= 7) {
+            try {
+                Runtime.getRuntime().exec(command, null, new File("/home/rtds/IdeaProjects/WorkloadCompactor_improvement"));
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+            //Assigns at least 7 tokens. So that, can serve simultaneously at least 7 tokens.
+            if (necessaryTokens > 7) {
+                WorkScheduler.setTotalAvailableTokens(WorkScheduler.getTotalAvailableTokens() - necessaryTokens);
+            } else {
+                WorkScheduler.setTotalAvailableTokens(WorkScheduler.getTotalAvailableTokens() - 7);
+            }
+            System.out.println("totalAvailableTokens: " + WorkScheduler.getTotalAvailableTokens());
+
+            positionOfServer = placeContainerInCapacityOfBuckets(necessaryTokens);
+            listOfServers.add(new ServerInformations(idOfServer, positionOfServer));
+
+        } else {
+            System.out.println("This server does not have enough tokens to serve this container suitably.");
+        }
+    }
+
+    private static int computeNecessaryTokens(int SLO) {
+        int necessaryTokens;
+        /*For a few values of SLO (10.0 / SLO) * 50 computes the equivalent of (int) ((10.0 / SLO) * 50) * 1.0,
+          meaning (10.0 / SLO) * 50 does not have values like 25.04 or 25.3.
+          Though if necessaryTokens are assigned always the value of (int) ((10.0 / SLO) * 50) + 1 in above case it takes value higher by 1 than it should have
+          e.g. for SLO = 20 instead of 25 it is assigned 26, because of + 1.
+        */
+        if ((10.0 / SLO) * 50 == (int) ((10.0 / SLO) * 50) * 1.0) {
+            necessaryTokens = (int) ((10.0 / SLO) * 50);
+        } else {
+            necessaryTokens = (int) ((10.0 / SLO) * 50) + 1;
+        }
+        return necessaryTokens;
     }
 
     /*Assigns the total tokens every application, which is going to be installed, is going to have available in the first empty cell of capacityOfBuckets it discovers

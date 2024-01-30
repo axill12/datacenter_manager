@@ -3,6 +3,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -60,6 +61,8 @@ public class WorkScheduler {
         WorkScheduler.totalAvailableTokens = totalAvailableTokens;
     }
 
+    private static File bucketsFile = new File ("buckets.txt");
+
     public static void main (String args []) {
 
         for (int i=0; i<7; i++) {
@@ -72,6 +75,9 @@ public class WorkScheduler {
             isPacketsCounterZero[i] = packetsCounterLock[i].newCondition();
             execTimeOfGenerator[i] = 0;
         }
+
+        WorkerForServers workerForServers = new WorkerForServers();
+        new Thread(workerForServers).start();
 
         try (ServerSocket server = new ServerSocket((7169))) {
             while (true) {
@@ -114,6 +120,17 @@ public class WorkScheduler {
                     System.out.println("The id of the server you provided, it is not number. This server does not exist. This request is not going to be sent to any server.");
                     return;
                 }
+
+                Scanner fileReader = new Scanner(bucketsFile);
+                String line;
+                while (fileReader.hasNextLine()) {
+                    line = fileReader.nextLine();
+                    if (line.startsWith(idOfServer)) {
+                        break;
+                    }
+                }
+
+                System.out.println ("buckets[" + serverCell + "]: " + buckets[serverCell]);
                 setTotalWorkOfRequests (work);
 
                 int counterForThisPacket;
@@ -221,6 +238,8 @@ public class WorkScheduler {
                     changeNumberOfAvailableTokens(tokensWillBeUsed);
                 }
 
+            } catch (FileNotFoundException fnfe) {
+                System.out.println ("Could not find buckets.txt.");
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -379,10 +398,34 @@ public class WorkScheduler {
         }
     }
 
-    //When a new application is installed with this function buckets[positionOfServer] is initiated with application's capacity of tokes.
-    static void initiateBucket (int positionOfServer, int necessaryTokens) {
-        buckets[positionOfServer] = necessaryTokens;
-        System.out.println("Its position is: " + positionOfServer + " buckets[" + positionOfServer + "]: " + buckets[positionOfServer]);
+    private static class WorkerForServers implements Runnable {
+
+        public void run () {
+            Socket client;
+            BufferedReader reader;
+            int necessaryTokens, positionOfServer;
+            try (ServerSocket server = new ServerSocket(7168)) {
+                while (true) {
+                    client = server.accept();
+                    reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                    //Here should receive the number of initial tokens this bucket is going to have.
+                    necessaryTokens = Integer.parseInt(reader.readLine());
+                    //Here should receive the position of server in buckets array.
+                    positionOfServer = Integer.parseInt(reader.readLine());
+                    /*Server is set up.
+                      Thus, no request should come yet and this thread is not going to alter the same cell concurrently with a request which needs to be served from this server.
+                    */
+                    buckets[positionOfServer] = necessaryTokens;
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            } catch (SecurityException se) {
+                se.printStackTrace();
+            } catch (IllegalArgumentException iae) {
+                iae.printStackTrace();
+            }
+        }
+
     }
 
 }
