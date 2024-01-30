@@ -47,23 +47,10 @@ public class WorkScheduler {
     */
     private static long execTimeOfGenerator[] = new long [7];
 
-    /*Each server in datacenter, which hosts applications, can distribute a specific number of tokens to applications it houses.
-          When a new application is hosted totalAvailableTokens are reduced, depending on its Service Level Objective (SLO).
-        */
-    private static int totalAvailableTokens = 50;
-
-    public static int getTotalAvailableTokens() {
-        return totalAvailableTokens;
-    }
-
-    public static void setTotalAvailableTokens(int totalAvailableTokens) {
-        WorkScheduler.totalAvailableTokens = totalAvailableTokens;
-    }
-
     public static void main (String args []) {
 
         for (int i=0; i<7; i++) {
-            buckets[i] = -1;
+            buckets[i] = 20;
             timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
             isFirstPacket[i] = true;
@@ -377,12 +364,6 @@ public class WorkScheduler {
                 System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
             }
         }
-    }
-
-    //When a new application is installed with this function buckets[positionOfServer] is initiated with application's capacity of tokes.
-    static void initiateBucket (int positionOfServer, int necessaryTokens) {
-        buckets[positionOfServer] = necessaryTokens;
-        System.out.println("Its position is: " + positionOfServer + " buckets[" + positionOfServer + "]: " + buckets[positionOfServer]);
     }
 
 }
