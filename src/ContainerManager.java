@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -102,6 +99,16 @@ public class ContainerManager  {
             positionOfServer = placeContainerInCapacityOfBuckets(necessaryTokens);
             listOfServers.add(new ServerInformations(idOfServer, positionOfServer));
 
+            File serverFile = new File ("bucketOfServer" + idOfServer + ".txt");
+            try {
+                serverFile.createNewFile();
+                RandomAccessFile writer = new RandomAccessFile("bucketOfServer" + idOfServer + ".txt", "rw");
+                writer.writeInt(necessaryTokens);writer.close();
+            } catch (FileNotFoundException fnfe) {
+                fnfe.printStackTrace();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
         } else {
             System.out.println("This server does not have enough tokens to serve this container suitably.");
         }
