@@ -9,12 +9,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class WorkScheduler {
 
-    /*The first cell of array represents the current number of tokens Server1's bucket has.
-      The second cell represents the current number of tokens Server2's bucket has.
-      The third is for Server2.
-    */
-    private static int buckets [] = new int [7];
-
     /*Here are stored the arrival times of last packets which arrived for each server.
     The first cell hold times for Server1, the second for Server2 and the third for Server3.
     When WorkScheduler starts assigns -1 to all cells in main method,
@@ -64,7 +58,6 @@ public class WorkScheduler {
     public static void main (String args []) {
 
         for (int i=0; i<7; i++) {
-            buckets[i] = -1;
             timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
             isFirstPacket[i] = true;
@@ -229,7 +222,7 @@ public class WorkScheduler {
                 }
 
             } catch (FileNotFoundException fnfe) {
-                System.out.println ("Could not find buckets.txt.");
+                System.out.println ("Could not find the file in that WorkScheduler reads and updates this server's available tokens.");
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -253,11 +246,13 @@ public class WorkScheduler {
                         tokensWillBeUsed = 1;
                         System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     } else {
-                        //Multiplication is done with buckets[serverCell] instead of 10 for the purpose of assigning the right amount of tokens if buckets[serverCell] < 10.
+                        /*Multiplication is done with current tokens instead of maximum tokens for the purpose of assigning the right amount of tokens
+                          if written available tokens in file are < 10.
+                        */
                         tokensWillBeUsed = (int) ((work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens());
-                        /*Sometimes when a thread (not the first) executes (work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell] is less than 1,
+                        /*Sometimes when a thread (not the first) executes (work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens() is less than 1,
                           because work is subtracted from totalWorkOfRequests[serverCell] by the previous threads,
-                          so (work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell] is not completely accurate.
+                          so (work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens() is not completely accurate.
                           In this block value 1 is given to tokensWillBeUsed.
                         */
                         if (tokensWillBeUsed == 0) {
@@ -266,8 +261,8 @@ public class WorkScheduler {
                         }
                         System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
-                    /*If (tokensWillBeUsed > buckets[serverCell]) correct tokensWillBeUsed.
-                      This exists because (work / (double) totalWorkOfRequests[serverCell]) * buckets[serverCell] becomes slightly different
+                    /*If (tokensWillBeUsed > getNumberOfAvailableTokens()) correct tokensWillBeUsed.
+                      This exists because (work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens() becomes slightly different
                       when another thread subtracts its work from totalWorkOfRequests[serverCell]
                       than (work / (double) totalWorkOfRequests[serverCell]) * 10 when work of other thread is not subtracted.
                     */
@@ -275,7 +270,7 @@ public class WorkScheduler {
                         while (getNumberOfAvailableTokens() == 0) {
                             tokensWillBeUsed = getNumberOfAvailableTokens();
                         }
-                        System.out.println(Thread.currentThread().threadId() + " in if (tokensWillBeUsed > buckets[serverCell]) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                        System.out.println(Thread.currentThread().threadId() + " in if (tokensWillBeUsed > getNumberOfAvailableTokens()) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
                 } // else if timeOfArrivalOfThisPacket != tap
                 else {
@@ -393,9 +388,9 @@ public class WorkScheduler {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                        /*Without availableTokens > buckets[serverCell] does not enter this if because packetsCounter[serverCell] becomes bigger than counterForThisPacket.
-                          availableTokens > buckets[serverCell] means another thread used some tokens.
-                        */
+                /*Without availableTokens > getNumberOfAvailableTokens() does not enter this if because packetsCounter[serverCell] becomes bigger than counterForThisPacket.
+                  availableTokens > getNumberOfAvailableTokens() means another thread used some tokens.
+                */
                 if ((packetsCounter[serverCell] == counterForThisPacket || availableTokens > getNumberOfAvailableTokens()) && timeOfArrivalOfThisPacket == timesOfArrivalOfPackets[serverCell]) {
                     try {
                         Thread.sleep(50);
@@ -408,36 +403,6 @@ public class WorkScheduler {
                 System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
             }
         }
-    }
-
-    private static class WorkerForServers implements Runnable {
-
-        public void run () {
-            Socket client;
-            BufferedReader reader;
-            int necessaryTokens, positionOfServer;
-            try (ServerSocket server = new ServerSocket(7168)) {
-                while (true) {
-                    client = server.accept();
-                    reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                    //Here should receive the number of initial tokens this bucket is going to have.
-                    necessaryTokens = Integer.parseInt(reader.readLine());
-                    //Here should receive the position of server in buckets array.
-                    positionOfServer = Integer.parseInt(reader.readLine());
-                    /*Server is set up.
-                      Thus, no request should come yet and this thread is not going to alter the same cell concurrently with a request which needs to be served from this server.
-                    */
-                    buckets[positionOfServer] = necessaryTokens;
-                }
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            } catch (SecurityException se) {
-                se.printStackTrace();
-            } catch (IllegalArgumentException iae) {
-                iae.printStackTrace();
-            }
-        }
-
     }
 
 }

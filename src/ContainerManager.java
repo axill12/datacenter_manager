@@ -25,14 +25,11 @@ public class ContainerManager  {
 
         String secondParameter;
         int SLO;
-        int necessaryTokens;
 
         ArrayList<ServerInformations> listOfServers = new ArrayList<>();
         for (int i=0; i < 7; i++) {
             capacityOfBuckets[i] = -1;
         }
-        //Position of server in capacityOfBuckets and buckets of WorkScheduler.
-        int positionOfServer;
 
         try (ServerSocket server = new ServerSocket(7170)) {
             while (true) {
