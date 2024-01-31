@@ -57,7 +57,7 @@ public class ContainerManager  {
                 notContainsOnlyDigits = matcher.find();
                 if (secondParameter.equals("r")) {
                     //TODO remove function
-                } else if (!notContainsOnlyDigits) {//TODO if secondParameter is SLO
+                } else if (!notContainsOnlyDigits) {
                     SLO = Integer.parseInt(secondParameter);
                     initiateServer(SLO, command, listOfServers, idOfServer);
                 } else {
@@ -103,7 +103,8 @@ public class ContainerManager  {
             try {
                 serverFile.createNewFile();
                 RandomAccessFile writer = new RandomAccessFile("bucketOfServer" + idOfServer + ".txt", "rw");
-                writer.writeInt(necessaryTokens);writer.close();
+                writer.writeInt(necessaryTokens);
+                writer.close();
             } catch (FileNotFoundException fnfe) {
                 fnfe.printStackTrace();
             } catch (IOException ioe) {
