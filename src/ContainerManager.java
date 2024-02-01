@@ -7,8 +7,6 @@ import java.util.regex.Pattern;
 
 public class ContainerManager  {
 
-    private static int capacityOfBuckets [] = new int [7];
-
     public static void main (String args[]) {
         Socket receiver;
         BufferedReader reader;
@@ -27,9 +25,6 @@ public class ContainerManager  {
         int SLO;
 
         ArrayList<ServerInformations> listOfServers = new ArrayList<>();
-        for (int i=0; i < 7; i++) {
-            capacityOfBuckets[i] = -1;
-        }
 
         try (ServerSocket server = new ServerSocket(7170)) {
             while (true) {
@@ -80,7 +75,6 @@ public class ContainerManager  {
 
     private static void initiateServer (int SLO, String command [], ArrayList<ServerInformations> listOfServers, int idOfServer) {
         int necessaryTokens = computeNecessaryTokens(SLO);
-        int positionOfServer;
 
         //It is better applications to be able to serve 7 requests simultaneously. That is the reason WorkScheduler.getTotalAvailableTokens() >= 7 is applied.
         if (necessaryTokens <= WorkScheduler.getTotalAvailableTokens() && WorkScheduler.getTotalAvailableTokens() >= 7) {
@@ -94,11 +88,11 @@ public class ContainerManager  {
                 WorkScheduler.setTotalAvailableTokens(WorkScheduler.getTotalAvailableTokens() - necessaryTokens);
             } else {
                 WorkScheduler.setTotalAvailableTokens(WorkScheduler.getTotalAvailableTokens() - 7);
+                necessaryTokens = 7;
             }
             System.out.println("totalAvailableTokens: " + WorkScheduler.getTotalAvailableTokens());
 
-            positionOfServer = placeContainerInCapacityOfBuckets(necessaryTokens);
-            listOfServers.add(new ServerInformations(idOfServer, positionOfServer));
+            listOfServers.add(new ServerInformations(idOfServer, necessaryTokens));
 
             File serverFile = new File ("bucketOfServer" + idOfServer + ".txt");
             try {
@@ -131,27 +125,15 @@ public class ContainerManager  {
         return necessaryTokens;
     }
 
-    /*Assigns the total tokens every application, which is going to be installed, is going to have available in the first empty cell of capacityOfBuckets it discovers
-      and returns the index of cell where number of total tokens is stored for the purpose of using it with buckets of WorkScheduler.
-    */
-    private static int placeContainerInCapacityOfBuckets (int necessaryTokens) {
-        int i = 0;
-        do {
-            i++;
-        } while (i < 7 && capacityOfBuckets[i - 1] != -1);
-        capacityOfBuckets[i - 1] = necessaryTokens;
-        return i - 1;
-    }
-
     //Holds the id of each server, which is placed in real computer and its position in buckets array of WorkScheduler.
     private static class ServerInformations {
         private int idOfServer;
 
-        private int positionOfServer;
+        private int tokensForServer;
 
-        private ServerInformations (int idOfServer, int positionOfServer) {
+        private ServerInformations (int idOfServer, int tokensForServer) {
             this.idOfServer = idOfServer;
-            this.positionOfServer = positionOfServer;
+            this.tokensForServer = tokensForServer;
         }
     }
 
