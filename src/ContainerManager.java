@@ -74,6 +74,10 @@ public class ContainerManager  {
         }
     }
 
+    private static void removeServer (String command [], ArrayList<ServerInformations> listOfServers) {
+
+    }
+
     private static void initiateServer (int SLO, String command [], ArrayList<ServerInformations> listOfServers, int idOfServer) {
         int necessaryTokens = computeNecessaryTokens(SLO);
         int positionOfServer;
