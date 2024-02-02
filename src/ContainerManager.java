@@ -1,6 +1,11 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -47,6 +52,8 @@ public class ContainerManager  {
                     initiateServer(SLO, command, setOfServers);
                 } else {
                   System.out.println ("The second parameter user wrote does not contain only digits and it is not r. Thus is wrong. His request cannot be satisfied.");
+                  reader.close();
+                  receiver.close();
                   continue;
                 }
 
@@ -79,8 +86,17 @@ public class ContainerManager  {
         System.out.println("totalAvailableTokens: " + WorkScheduler.getTotalAvailableTokens());
         setOfServers.remove(idOfServer);
         //It deletes the file that holds the tokens of server.
-        File bucketFile = new File("bucketOfServer" + idOfServer + ".txt");
-        bucketFile.delete();
+        try {
+            Files.delete(Paths.get("bucketOfServer" + idOfServer + ".txt"));
+        } catch (NoSuchFileException nsfe) {
+            nsfe.printStackTrace();
+        } catch (DirectoryNotEmptyException dnee) {
+            dnee.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (SecurityException se) {
+            se.printStackTrace();
+        }
         try {
             Runtime.getRuntime().exec(command, null, new File("/home/rtds/IdeaProjects/WorkloadCompactor_improvement"));
         } catch (IOException ioe) {
@@ -91,7 +107,7 @@ public class ContainerManager  {
     private static void initiateServer (int SLO, String command [], HashMap<Integer, Integer> setOfServers) {
         int necessaryTokens = computeNecessaryTokens(SLO);
         command[1] = "ContainerInstaller.sh";
-        //If i do not initialize it, it appears error in try.
+        //If I do not initialize it, it appears error in try.
         int idOfServer = -1;
 
         //It is better applications to be able to serve 7 requests simultaneously. That is the reason WorkScheduler.getTotalAvailableTokens() >= 7 is applied.
