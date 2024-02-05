@@ -242,7 +242,7 @@ public class WorkScheduler {
                 int tokensWillBeUsed;
                 if (timeOfArrivalOfThisPacket == tap || timeOfArrivalOfThisPacket == arrivalTimeOfPreviousRequest) {
                     //If (work / (double) totalWorkOfTwoRequests[serverCell]) < 0.1 it would assign 0 tokens, due to use of (int) to calculation of tokensWillBeUsed.
-                    if ((work / (double) totalWorkOfRequests[serverCell]) < 0.1) {
+                    if ((int) ((work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens()) == 0) {
                         tokensWillBeUsed = 1;
                         System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     } else {
