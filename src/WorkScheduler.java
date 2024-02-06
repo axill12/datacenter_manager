@@ -267,6 +267,7 @@ public class WorkScheduler {
                       than (work / (double) totalWorkOfRequests[serverCell]) * 10 when work of other thread is not subtracted.
                     */
                     if (tokensWillBeUsed > getNumberOfAvailableTokens()) {
+                        tokensWillBeUsed = getNumberOfAvailableTokens();
                         while (getNumberOfAvailableTokens() == 0) {
                             tokensWillBeUsed = getNumberOfAvailableTokens();
                         }
