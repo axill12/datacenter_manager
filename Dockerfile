@@ -1,5 +1,5 @@
 FROM openjdk:21
 COPY ./out/production/WorkloadCompactor_improvement /program
 WORKDIR /program
-ENTRYPOINT ["java", "Server7"]
-EXPOSE 6840
+ENTRYPOINT ["java", "Servers.Server10"]
+EXPOSE 6843

@@ -14,33 +14,33 @@ public class WorkScheduler {
     When WorkScheduler starts assigns -1 to all cells in main method,
     so if scheduler in run method notice a cell contains -1 it knows no packet for the corresponding server has written its arrival time.
      */
-    private static long timesOfArrivalOfPackets [] = new long [7];
+    private static long timesOfArrivalOfPackets [] = new long [20];
 
     /*Counts the packets arrived per server because if subtraction is zero,
     it may be because no packet arrived and the last request subtract its arrival time with its arrival time.
      */
-    private static int packetsCounter[] = new int [7];
+    private static int packetsCounter[] = new int [20];
 
     /*If it is the first packet is true. Without the first two threads may enter both at if (timesOfArrivalOfPackets[serverCell] == -1)
       because timesOfArrivalOfPackets[serverCell] didn't have time to change.
     */
-    private static boolean isFirstPacket[] = new boolean [7];
+    private static boolean isFirstPacket[] = new boolean [20];
 
-    private static volatile boolean isInPacketsCounterLock[] = new boolean[7];
+    private static volatile boolean isInPacketsCounterLock[] = new boolean[20];
 
-    private static ReentrantLock packetsCounterLock[] = new ReentrantLock[7];
+    private static ReentrantLock packetsCounterLock[] = new ReentrantLock[20];
 
-    private static Condition isPacketsCounterZero[] = new Condition[7];
+    private static Condition isPacketsCounterZero[] = new Condition[20];
 
     //Its first value is zero because I did not assign it a value.
-    private static int totalWorkOfRequests[] = new int [7];
+    private static int totalWorkOfRequests[] = new int [20];
 
     /*This variable contains the last time method generateRandomNumber executed.
       If the previous bundle's last request had the same arrival time with the first request of the next bundle
       the thread of first request of new bundle would assume the lats request of previous bundle belongs to his bundle,
       because they would have the same arrival time. Thus, this variable is necessary only because of the dummy way arrival times are produced.
     */
-    private static long execTimeOfGenerator[] = new long [7];
+    private static long execTimeOfGenerator[] = new long [20];
 
     /*Each server in datacenter, which hosts applications, can distribute a specific number of tokens to applications it houses.
           When a new application is hosted totalAvailableTokens are reduced, depending on its Service Level Objective (SLO).
@@ -57,7 +57,7 @@ public class WorkScheduler {
 
     public static void main (String args []) {
 
-        for (int i=0; i<7; i++) {
+        for (int i=0; i<20; i++) {
             timesOfArrivalOfPackets[i] = 0;
             packetsCounter[i] = 0;
             isFirstPacket[i] = true;
