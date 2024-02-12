@@ -1,14 +1,15 @@
+package Servers;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Random;
 
-public class Server2 {
+public class Server4 {
 
     public static void main (String args []) {
-        try (ServerSocket server = new ServerSocket((6835))) {
+        try (ServerSocket server = new ServerSocket((6837))) {
             while (true) {
                 Socket client = server.accept();
                 Worker worker = new Worker (client);
@@ -38,13 +39,11 @@ public class Server2 {
                 } catch (NumberFormatException e) {
                     System.out.println ("The input from client isn't in a form that can be considered integer. This is input;\n" + line);
                 }
-                int result = 0;
+                double result = 0;
                 //It adds timesOfAddition * 10 times 1 to result.
                 if (timesOfAddition != -1) {
-                    Random random = new Random();
-                    random.setSeed(System.currentTimeMillis());
-                    for (int i=0; i<timesOfAddition*5; i++) {
-                        result += Math.abs(random.nextInt()) % 3;
+                    for (int i=1; i<=timesOfAddition*5; i++) {
+                        result += Math.abs(Math.sin(i));
                     }
                 }
                 System.out.println(result);

@@ -1,13 +1,16 @@
+package Servers;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Random;
 
-public class Server1 {
+public class Server2 {
 
     public static void main (String args []) {
-        try (ServerSocket server = new ServerSocket((6834))) {
+        try (ServerSocket server = new ServerSocket((6835))) {
             while (true) {
                 Socket client = server.accept();
                 Worker worker = new Worker (client);
@@ -40,8 +43,10 @@ public class Server1 {
                 int result = 0;
                 //It adds timesOfAddition * 10 times 1 to result.
                 if (timesOfAddition != -1) {
-                    for (int i=0; i<timesOfAddition*10; i++) {
-                        result++;
+                    Random random = new Random();
+                    random.setSeed(System.currentTimeMillis());
+                    for (int i=0; i<timesOfAddition*5; i++) {
+                        result += Math.abs(random.nextInt()) % 3;
                     }
                 }
                 System.out.println(result);

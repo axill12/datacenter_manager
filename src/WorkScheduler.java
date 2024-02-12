@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class WorkScheduler {
 
     /*Here are stored the arrival times of last packets which arrived for each server.
-    The first cell hold times for Server1, the second for Server2 and the third for Server3.
+    The first cell hold times for Servers.Server1, the second for Servers.Server2 and the third for Servers.Server3.
     When WorkScheduler starts assigns -1 to all cells in main method,
     so if scheduler in run method notice a cell contains -1 it knows no packet for the corresponding server has written its arrival time.
      */
