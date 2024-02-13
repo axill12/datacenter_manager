@@ -5,8 +5,6 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
-import java.security.Security;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -158,10 +156,10 @@ public class ContainerManager  {
           Though if necessaryTokens are assigned always the value of (int) ((10.0 / SLO) * 50) + 1 in above case it takes value higher by 1 than it should have
           e.g. for SLO = 20 instead of 25 it is assigned 26, because of + 1.
         */
-        if ((10.0 / SLO) * 50 == (int) ((10.0 / SLO) * 50) * 1.0) {
-            necessaryTokens = (int) ((10.0 / SLO) * 50);
+        if ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS == (int) ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS) * 1.0) {
+            necessaryTokens = (int) ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS);
         } else {
-            necessaryTokens = (int) ((10.0 / SLO) * 50) + 1;
+            necessaryTokens = (int) ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS) + 1;
         }
         return necessaryTokens;
     }

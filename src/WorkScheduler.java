@@ -42,10 +42,12 @@ public class WorkScheduler {
     */
     private static long execTimeOfGenerator[] = new long [20];
 
+    static final int INITIAL_TOTAL_AVAILABLE_TOKENS = 200;
+
     /*Each server in datacenter, which hosts applications, can distribute a specific number of tokens to applications it houses.
           When a new application is hosted totalAvailableTokens are reduced, depending on its Service Level Objective (SLO).
         */
-    private static int totalAvailableTokens = 50;
+    private static int totalAvailableTokens = INITIAL_TOTAL_AVAILABLE_TOKENS;
 
     public static int getTotalAvailableTokens() {
         return totalAvailableTokens;
