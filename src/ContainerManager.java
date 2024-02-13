@@ -151,15 +151,15 @@ public class ContainerManager  {
 
     private static int computeNecessaryTokens(int SLO) {
         int necessaryTokens;
-        /*For a few values of SLO (10.0 / SLO) * 50 computes the equivalent of (int) ((10.0 / SLO) * 50) * 1.0,
-          meaning (10.0 / SLO) * 50 does not have values like 25.04 or 25.3.
-          Though if necessaryTokens are assigned always the value of (int) ((10.0 / SLO) * 50) + 1 in above case it takes value higher by 1 than it should have
+        /*For a few values of SLO (20.0 / SLO) * INITIAL_TOTAL_AVAILABLE_TOKENS computes the equivalent of (int) ((20.0 / SLO) * INITIAL_TOTAL_AVAILABLE_TOKENS) * 1.0,
+          meaning (20.0 / SLO) * INITIAL_TOTAL_AVAILABLE_TOKENS does not have values like 25.04 or 25.3.
+          Though if necessaryTokens are assigned always the value of (int) ((20.0 / SLO) * INITIAL_TOTAL_AVAILABLE_TOKENS) + 1 in above case it takes value higher by 1 than it should have
           e.g. for SLO = 20 instead of 25 it is assigned 26, because of + 1.
         */
-        if ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS == (int) ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS) * 1.0) {
-            necessaryTokens = (int) ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS);
+        if ((20.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS == (int) ((20.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS) * 1.0) {
+            necessaryTokens = (int) ((20.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS);
         } else {
-            necessaryTokens = (int) ((10.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS) + 1;
+            necessaryTokens = (int) ((20.0 / SLO) * WorkScheduler.INITIAL_TOTAL_AVAILABLE_TOKENS) + 1;
         }
         return necessaryTokens;
     }
