@@ -154,7 +154,7 @@ public class WorkScheduler {
                             isPacketsCounterZero[serverCell].signal();
                             System.out.println (Thread.currentThread().threadId() + " just after isPacketsCounterZero.signal()");
                         } catch (IllegalMonitorStateException e) {
-                            System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.");
+                            System.out.println ("isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired. ");
                         }
                         //Without break for some reason does not exit
                         if (packetsCounter[serverCell] == 2) {
@@ -240,13 +240,14 @@ public class WorkScheduler {
         private int assignTokens (long timeOfArrivalOfThisPacket, long arrivalTimeOfPreviousRequest, int work) {
             synchronized (WorkerForRequests.class) {
                 long tap = timesOfArrivalOfPackets[serverCell];
+                int idOfServer = serverCell + 1;
                 System.out.println(Thread.currentThread().threadId() + " timesOfArrivalOfPackets[serverCell]: " + timesOfArrivalOfPackets[serverCell] + " timeOfArrivalOfThisPacket: " + timeOfArrivalOfThisPacket);
                 int tokensWillBeUsed;
                 if (timeOfArrivalOfThisPacket == tap || timeOfArrivalOfThisPacket == arrivalTimeOfPreviousRequest) {
                     //If (work / (double) totalWorkOfTwoRequests[serverCell]) < 0.1 it would assign 0 tokens, due to use of (int) to calculation of tokensWillBeUsed.
                     if ((int) ((work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens()) == 0) {
                         tokensWillBeUsed = 1;
-                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                        System.out.println(Thread.currentThread().threadId() + "idOfServer: " + idOfServer + " in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     } else {
                         /*Multiplication is done with current tokens instead of maximum tokens for the purpose of assigning the right amount of tokens
                           if written available tokens in file are < 10.
@@ -259,9 +260,9 @@ public class WorkScheduler {
                         */
                         if (tokensWillBeUsed == 0) {
                             tokensWillBeUsed = 1;
-                            System.out.println(Thread.currentThread().threadId() + "in in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) in if (tokensWillBeUsed == 0)");
+                            System.out.println(Thread.currentThread().threadId() + "idOfServer: " + idOfServer + " in in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) in if (tokensWillBeUsed == 0)");
                         }
-                        System.out.println(Thread.currentThread().threadId() + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                        System.out.println(Thread.currentThread().threadId() + "idOfServer: " + idOfServer + " in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
                     /*If (tokensWillBeUsed > getNumberOfAvailableTokens()) correct tokensWillBeUsed.
                       This exists because (work / (double) totalWorkOfRequests[serverCell]) * getNumberOfAvailableTokens() becomes slightly different
@@ -273,12 +274,12 @@ public class WorkScheduler {
                         while (getNumberOfAvailableTokens() == 0) {
                             tokensWillBeUsed = getNumberOfAvailableTokens();
                         }
-                        System.out.println(Thread.currentThread().threadId() + " in if (tokensWillBeUsed > getNumberOfAvailableTokens()) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
+                        System.out.println(Thread.currentThread().threadId() + "idOfServer: " + idOfServer + " in if (tokensWillBeUsed > getNumberOfAvailableTokens()) tokens assigned: " + tokensWillBeUsed + " work: " + work + " totalWorkOfTwoRequests[serverCell]: " + totalWorkOfRequests[serverCell]);
                     }
                 } // else if timeOfArrivalOfThisPacket != tap
                 else {
                     tokensWillBeUsed = getNumberOfAvailableTokens();
-                    System.out.println(Thread.currentThread().threadId() + " in else tokens assigned: " + tokensWillBeUsed);
+                    System.out.println(Thread.currentThread().threadId() + "idOfServer: " + idOfServer + " in else tokens assigned: " + tokensWillBeUsed);
                 }
                 setTotalWorkOfRequests(-1 * work);
                 changeNumberOfAvailableTokens(-1 * tokensWillBeUsed);
@@ -403,7 +404,7 @@ public class WorkScheduler {
                         e.printStackTrace();
                     }
                 }
-                System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell]);
+                System.out.println (Thread.currentThread().threadId() + " in while in waitIfNecessary packetsCounter[serverCell]: " + packetsCounter[serverCell] + " ");
             }
         }
     }

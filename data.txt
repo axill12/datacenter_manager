@@ -1,0 +1,220 @@
+available tokens of server1: 20
+available tokens of server1: 20
+available tokens of server1: 20
+available tokens of server1: 20
+23 in timesOfArrivalOfPackets[serverCell] > 0
+24 in timesOfArrivalOfPackets[serverCell] > 0
+22 in timesOfArrivalOfPackets[serverCell] == 0
+25 in timesOfArrivalOfPackets[serverCell] > 0
+25 timeOfArrivalOfThisPacket: 4596
+23 timeOfArrivalOfThisPacket: 4596
+24 timeOfArrivalOfThisPacket: 4596
+22 timeOfArrivalOfThisPacket: 4596
+25 isInPacketsCounterLock == [Z@16c16298
+25 In while in lock
+24 isInPacketsCounterLock == [Z@16c16298
+23 isInPacketsCounterLock == [Z@16c16298
+23 counterForThisPacket: 3
+22 counterForThisPacket: 1
+24 counterForThisPacket: 2
+22 in while in waitIfNecessary packetsCounter[serverCell]: 3
+24 in while in waitIfNecessary packetsCounter[serverCell]: 3
+22 in while in waitIfNecessary packetsCounter[serverCell]: 3
+24 in while in waitIfNecessary packetsCounter[serverCell]: 3
+23 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+23idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 6 work: 7805 totalWorkOfTwoRequests[serverCell]: 25108
+23 port: 6834
+22 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+22idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 7 work: 9815 totalWorkOfTwoRequests[serverCell]: 17303
+22 port: 6834
+24 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+24idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: 1 work: 541 totalWorkOfTwoRequests[serverCell]: 7488
+24 port: 6834
+available tokens of server2: 20
+26 in timesOfArrivalOfPackets[serverCell] == 0
+26 timeOfArrivalOfThisPacket: 4596
+26 counterForThisPacket: 1
+available tokens of server2: 20
+27 in timesOfArrivalOfPackets[serverCell] > 0
+27 timeOfArrivalOfThisPacket: 4596
+27 counterForThisPacket: 2
+26 isInPacketsCounterLock == [Z@16c16298
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+26 in if (packetsCounter[serverCell] == 2) just before break
+available tokens of server2: 20
+28 in timesOfArrivalOfPackets[serverCell] > 0
+28 timeOfArrivalOfThisPacket: 4596
+28 counterForThisPacket: 3
+available tokens of server2: 20
+29 in timesOfArrivalOfPackets[serverCell] > 0
+29 timeOfArrivalOfThisPacket: 4596
+29 counterForThisPacket: 4
+27 in while in waitIfNecessary packetsCounter[serverCell]: 4
+26 in while in waitIfNecessary packetsCounter[serverCell]: 4
+28 in while in waitIfNecessary packetsCounter[serverCell]: 4
+27 in while in waitIfNecessary packetsCounter[serverCell]: 4
+26 in while in waitIfNecessary packetsCounter[serverCell]: 4
+29 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+29idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 5 work: 5816 totalWorkOfTwoRequests[serverCell]: 22021
+28 in while in waitIfNecessary packetsCounter[serverCell]: 4
+29 port: 6835
+27 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+27idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: 1 work: 736 totalWorkOfTwoRequests[serverCell]: 16205
+27 port: 6835
+26 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+26idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 7 work: 8203 totalWorkOfTwoRequests[serverCell]: 15469
+26 port: 6835
+28 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+28idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 7 work: 7266 totalWorkOfTwoRequests[serverCell]: 7266
+28 port: 6835
+available tokens of server3: 20
+30 in timesOfArrivalOfPackets[serverCell] == 0
+30 timeOfArrivalOfThisPacket: 4596
+30 counterForThisPacket: 1
+30 isInPacketsCounterLock == [Z@16c16298
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+available tokens of server3: 20
+31 in timesOfArrivalOfPackets[serverCell] > 0
+31 timeOfArrivalOfThisPacket: 4596
+30 packetsCounter[serverCell]: 1
+30 isInPacketsCounterLock == [Z@16c16298
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+30 in if (packetsCounter[serverCell] == 2) just before break
+31 counterForThisPacket: 2
+available tokens of server3: 20
+32 in timesOfArrivalOfPackets[serverCell] > 0
+32 timeOfArrivalOfThisPacket: 4596
+32 counterForThisPacket: 3
+available tokens of server3: 20
+33 in timesOfArrivalOfPackets[serverCell] > 0
+33 timeOfArrivalOfThisPacket: 4596
+33 counterForThisPacket: 4
+30 in while in waitIfNecessary packetsCounter[serverCell]: 4
+31 in while in waitIfNecessary packetsCounter[serverCell]: 4
+32 in while in waitIfNecessary packetsCounter[serverCell]: 4
+30 in while in waitIfNecessary packetsCounter[serverCell]: 4
+31 in while in waitIfNecessary packetsCounter[serverCell]: 4
+32 in while in waitIfNecessary packetsCounter[serverCell]: 4
+33 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+33idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 1 work: 522 totalWorkOfTwoRequests[serverCell]: 7764
+33 port: 6836
+31 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+31idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 6 work: 2514 totalWorkOfTwoRequests[serverCell]: 7242
+31 port: 6836
+32 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+32idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 3 work: 1229 totalWorkOfTwoRequests[serverCell]: 4728
+32 port: 6836
+30 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+30idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 10 work: 3499 totalWorkOfTwoRequests[serverCell]: 3499
+30 port: 6836
+available tokens of server4: 20
+34 in timesOfArrivalOfPackets[serverCell] == 0
+34 timeOfArrivalOfThisPacket: 4596
+34 counterForThisPacket: 1
+35 in timesOfArrivalOfPackets[serverCell] > 0
+35 timeOfArrivalOfThisPacket: 4596
+35 counterForThisPacket: 2
+34 packetsCounter[serverCell]: 1
+34 isInPacketsCounterLock == [Z@16c16298
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+34 in if (packetsCounter[serverCell] == 2) just before break
+available tokens of server4: 20
+36 in timesOfArrivalOfPackets[serverCell] > 0
+36 timeOfArrivalOfThisPacket: 4596
+36 counterForThisPacket: 3
+available tokens of server4: 20
+37 in timesOfArrivalOfPackets[serverCell] > 0
+37 timeOfArrivalOfThisPacket: 4596
+37 counterForThisPacket: 4
+35 in while in waitIfNecessary packetsCounter[serverCell]: 4
+34 in while in waitIfNecessary packetsCounter[serverCell]: 4
+36 in while in waitIfNecessary packetsCounter[serverCell]: 4
+35 in while in waitIfNecessary packetsCounter[serverCell]: 4
+34 in while in waitIfNecessary packetsCounter[serverCell]: 4
+36 in while in waitIfNecessary packetsCounter[serverCell]: 4
+37 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+37idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 1 work: 1727 totalWorkOfTwoRequests[serverCell]: 17526
+37 port: 6837
+34 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+34idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 4 work: 3520 totalWorkOfTwoRequests[serverCell]: 15799
+34 port: 6837
+35 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+35idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 7 work: 5904 totalWorkOfTwoRequests[serverCell]: 12279
+35 port: 6837
+36 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+36idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 8 work: 6375 totalWorkOfTwoRequests[serverCell]: 6375
+36 port: 6837
+available tokens of server5: 60
+38 in timesOfArrivalOfPackets[serverCell] == 0
+38 timeOfArrivalOfThisPacket: 4596
+38 counterForThisPacket: 1
+
+38 packetsCounter[serverCell]: 1
+available tokens of server5: 60
+38 isInPacketsCounterLock == [Z@16c16298
+available tokens of server5: 60
+40 in timesOfArrivalOfPackets[serverCell] > 0
+40 timeOfArrivalOfThisPacket: 4596
+40 counterForThisPacket: 2
+available tokens of server5: 60
+39 in timesOfArrivalOfPackets[serverCell] > 0
+39 timeOfArrivalOfThisPacket: 4596
+39 counterForThisPacket: 3
+41 in timesOfArrivalOfPackets[serverCell] > 0
+41 timeOfArrivalOfThisPacket: 4596
+41 counterForThisPacket: 4
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+38 packetsCounter[serverCell]: 4
+40 in while in waitIfNecessary packetsCounter[serverCell]: 4
+38 in while in waitIfNecessary packetsCounter[serverCell]: 4
+39 in while in waitIfNecessary packetsCounter[serverCell]: 4
+41 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+41idOfServer: 5 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 15 work: 8047 totalWorkOfTwoRequests[serverCell]: 31032
+41 port: 6838
+40 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+40idOfServer: 5 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 14 work: 7540 totalWorkOfTwoRequests[serverCell]: 22985
+40 port: 6838
+38 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+38idOfServer: 5 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 13 work: 6954 totalWorkOfTwoRequests[serverCell]: 15445
+38 port: 6838
+39 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+39idOfServer: 5 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 18 work: 8491 totalWorkOfTwoRequests[serverCell]: 8491
+39 port: 6838
+available tokens of server6: 60
+42 in timesOfArrivalOfPackets[serverCell] == 0
+42 timeOfArrivalOfThisPacket: 4596
+42 counterForThisPacket: 1
+42 isInPacketsCounterLock == [Z@16c16298
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+42 packetsCounter[serverCell]: 1
+42 isInPacketsCounterLock == [Z@16c16298
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+42 packetsCounter[serverCell]: 1
+42 isInPacketsCounterLock == [Z@16c16298
+available tokens of server6: 60
+43 in timesOfArrivalOfPackets[serverCell] > 0
+43 timeOfArrivalOfThisPacket: 4596
+43 counterForThisPacket: 2
+isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
+42 in if (packetsCounter[serverCell] == 2) just before break
+available tokens of server6: 60
+44 in timesOfArrivalOfPackets[serverCell] > 0
+44 timeOfArrivalOfThisPacket: 4596
+44 counterForThisPacket: 3
+available tokens of server6: 60
+45 in timesOfArrivalOfPackets[serverCell] > 0
+45 timeOfArrivalOfThisPacket: 4596
+45 counterForThisPacket: 4
+42 in while in waitIfNecessary packetsCounter[serverCell]: 4
+43 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+43idOfServer: 6 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 21 work: 8638 totalWorkOfTwoRequests[serverCell]: 23731
+43 port: 6839
+44 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+44idOfServer: 6 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 21 work: 8488 totalWorkOfTwoRequests[serverCell]: 15093
+44 port: 6839
+45 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+45idOfServer: 6 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 10 work: 3740 totalWorkOfTwoRequests[serverCell]: 6605
+45 port: 6839
+42 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+42idOfServer: 6 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 8 work: 2865 totalWorkOfTwoRequests[serverCell]: 2865
+42 port: 6839
