@@ -25,11 +25,6 @@ public class ClientExperiment1 {
                         //Creates a thread with the id of the server, to which this requests must reach, and a number from 1 to 10000.
                         new Thread(new Worker(String.valueOf(j), String.valueOf(1 + randomInt % 10000))).start();
                     }
-                    try {
-                        Thread.sleep(700);
-                    } catch (InterruptedException ie) {
-                        ie.printStackTrace();
-                    }
                 }
             } catch (NumberFormatException e) {
                 if (userInput.equals("ex")) {
