@@ -19,7 +19,7 @@ public class ClientExperiment1 {
             userInput = reader.readLine();
             try {
                 int numOfRequests = Integer.parseInt(userInput);
-                for (int j=1; j <= 6; j++) {
+                for (int j=1; j <= 4; j++) {
                     for (int i = 0; i < numOfRequests; i++) {
                         randomInt = Math.abs(random.nextInt());
                         //Creates a thread with the id of the server, to which this requests must reach, and a number from 1 to 10000.
