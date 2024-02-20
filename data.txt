@@ -1,151 +1,104 @@
-available tokens of server1: 20
-available tokens of server2: 60
-available tokens of server2: 60
-available tokens of server2: 60
-available tokens of server2: 60
-available tokens of server1: 20
-28 in timesOfArrivalOfPackets[serverCell] > 0
-25 in timesOfArrivalOfPackets[serverCell] > 0
-available tokens of server1: 20
+available tokens of server1: 66
+available tokens of server2: 66
+available tokens of server1: 66
+available tokens of server2: 66
+available tokens of server1: 66
 23 in timesOfArrivalOfPackets[serverCell] > 0
-27 in timesOfArrivalOfPackets[serverCell] > 0
-available tokens of server3: 60
-30 in timesOfArrivalOfPackets[serverCell] == 0
-22 in timesOfArrivalOfPackets[serverCell] == 0
-26 in timesOfArrivalOfPackets[serverCell] == 0
-23 timeOfArrivalOfThisPacket: 4596
+24 in timesOfArrivalOfPackets[serverCell] == 0
+available tokens of server1: 66
+22 in timesOfArrivalOfPackets[serverCell] > 0
+26 in timesOfArrivalOfPackets[serverCell] > 0
+available tokens of server2: 66
+28 in timesOfArrivalOfPackets[serverCell] > 0
+27 in timesOfArrivalOfPackets[serverCell] == 0
+25 in timesOfArrivalOfPackets[serverCell] > 0
+24 timeOfArrivalOfThisPacket: 4596
 26 timeOfArrivalOfThisPacket: 4596
-available tokens of server3: 60
-31 in timesOfArrivalOfPackets[serverCell] > 0
-31 timeOfArrivalOfThisPacket: 4596
-28 timeOfArrivalOfThisPacket: 4596
-25 timeOfArrivalOfThisPacket: 4596
-26 counterForThisPacket: 1
-25 counterForThisPacket: 2
-available tokens of server3: 60
-32 in timesOfArrivalOfPackets[serverCell] > 0
-32 timeOfArrivalOfThisPacket: 4596
-available tokens of server1: 20
+available tokens of server2: 66
 29 in timesOfArrivalOfPackets[serverCell] > 0
 29 timeOfArrivalOfThisPacket: 4596
+25 timeOfArrivalOfThisPacket: 4596
 27 timeOfArrivalOfThisPacket: 4596
-24 in timesOfArrivalOfPackets[serverCell] > 0
-24 timeOfArrivalOfThisPacket: 4596
-24 counterForThisPacket: 3
-30 timeOfArrivalOfThisPacket: 4596
-30 counterForThisPacket: 1
+23 timeOfArrivalOfThisPacket: 4596
+28 timeOfArrivalOfThisPacket: 4596
 22 timeOfArrivalOfThisPacket: 4596
-22 counterForThisPacket: 1
-27 counterForThisPacket: 4
-29 isInPacketsCounterLock == [Z@25c6020b
-32 isInPacketsCounterLock == [Z@25c6020b
-32 counterForThisPacket: 2
-29 counterForThisPacket: 2
-26 isInPacketsCounterLock == [Z@25c6020b
-23 isInPacketsCounterLock == [Z@25c6020b
+available tokens of server3: 66
+31 in timesOfArrivalOfPackets[serverCell] == 0
+31 timeOfArrivalOfThisPacket: 4596
+available tokens of server3: 66
+30 in timesOfArrivalOfPackets[serverCell] > 0
+30 timeOfArrivalOfThisPacket: 4596
+29 isInPacketsCounterLock == [Z@5f3b43cd
+27 counterForThisPacket: 1
+24 counterForThisPacket: 1
+28 counterForThisPacket: 2
+available tokens of server3: 66
 23 counterForThisPacket: 3
-28 isInPacketsCounterLock == [Z@25c6020b
-28 counterForThisPacket: 4
-31 isInPacketsCounterLock == [Z@25c6020b
-31 counterForThisPacket: 3
-isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
-available tokens of server4: 60
-33 in timesOfArrivalOfPackets[serverCell] == 0
+29 counterForThisPacket: 3
+32 in timesOfArrivalOfPackets[serverCell] > 0
+32 timeOfArrivalOfThisPacket: 4596
+32 counterForThisPacket: 3
+25 counterForThisPacket: 2
+22 counterForThisPacket: 4
+30 counterForThisPacket: 2
+31 counterForThisPacket: 1
+26 isInPacketsCounterLock == [Z@5f3b43cd
+26 counterForThisPacket: 4
+available tokens of server3: 66
+33 in timesOfArrivalOfPackets[serverCell] > 0
 33 timeOfArrivalOfThisPacket: 4596
-33 counterForThisPacket: 1
-33 isInPacketsCounterLock == [Z@25c6020b
-isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
-26 packetsCounter[serverCell]: 4
-
-available tokens of server3: 60
-34 in timesOfArrivalOfPackets[serverCell] > 0
-34 timeOfArrivalOfThisPacket: 4596
-34 counterForThisPacket: 4
-
-available tokens of server4: 60
-35 in timesOfArrivalOfPackets[serverCell] > 0
-35 timeOfArrivalOfThisPacket: 4596
-35 counterForThisPacket: 2
-33 isInPacketsCounterLock == [Z@25c6020b
-isPacketsCounterZero.signal() was executed before a thread acquires the packetsCounterLock, but this thread can continue execute normally. The packetsCounterLock it is never going to be acquired.
-33 in if (packetsCounter[serverCell] == 2) just before break
-available tokens of server4: 60
-36 in timesOfArrivalOfPackets[serverCell] > 0
-36 timeOfArrivalOfThisPacket: 4596
-36 counterForThisPacket: 3
-available tokens of server4: 60
-37 in timesOfArrivalOfPackets[serverCell] > 0
-37 timeOfArrivalOfThisPacket: 4596
-37 counterForThisPacket: 4
-33 in while in waitIfNecessary packetsCounter[serverCell]: 4
+33 counterForThisPacket: 4
+27 in while in waitIfNecessary packetsCounter[serverCell]: 4
+31 in while in waitIfNecessary packetsCounter[serverCell]: 4
 23 in while in waitIfNecessary packetsCounter[serverCell]: 4
 29 in while in waitIfNecessary packetsCounter[serverCell]: 4
-22 in while in waitIfNecessary packetsCounter[serverCell]: 4
 24 in while in waitIfNecessary packetsCounter[serverCell]: 4
-35 in while in waitIfNecessary packetsCounter[serverCell]: 4
-25 in while in waitIfNecessary packetsCounter[serverCell]: 4
-31 in while in waitIfNecessary packetsCounter[serverCell]: 4
-26 in while in waitIfNecessary packetsCounter[serverCell]: 4
-36 in while in waitIfNecessary packetsCounter[serverCell]: 4
-32 in while in waitIfNecessary packetsCounter[serverCell]: 4
+28 in while in waitIfNecessary packetsCounter[serverCell]: 4
 30 in while in waitIfNecessary packetsCounter[serverCell]: 4
-29 in while in waitIfNecessary packetsCounter[serverCell]: 4
-31 in while in waitIfNecessary packetsCounter[serverCell]: 4
-33 in while in waitIfNecessary packetsCounter[serverCell]: 4
+32 in while in waitIfNecessary packetsCounter[serverCell]: 4
+25 in while in waitIfNecessary packetsCounter[serverCell]: 4
+27 in while in waitIfNecessary packetsCounter[serverCell]: 4
 23 in while in waitIfNecessary packetsCounter[serverCell]: 4
-22 in while in waitIfNecessary packetsCounter[serverCell]: 4
+29 in while in waitIfNecessary packetsCounter[serverCell]: 4
+32 in while in waitIfNecessary packetsCounter[serverCell]: 4
+28 in while in waitIfNecessary packetsCounter[serverCell]: 4
 24 in while in waitIfNecessary packetsCounter[serverCell]: 4
-35 in while in waitIfNecessary packetsCounter[serverCell]: 4
 25 in while in waitIfNecessary packetsCounter[serverCell]: 4
 30 in while in waitIfNecessary packetsCounter[serverCell]: 4
-32 in while in waitIfNecessary packetsCounter[serverCell]: 4
-26 in while in waitIfNecessary packetsCounter[serverCell]: 4
-37 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-36 in while in waitIfNecessary packetsCounter[serverCell]: 4
-37idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 7 work: 1927 totalWorkOfTwoRequests[serverCell]: 15248
-37 port: 6837
-34 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-34idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 9 work: 2422 totalWorkOfTwoRequests[serverCell]: 14754
-34 port: 6836
-28 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-28idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 4 work: 5470 totalWorkOfTwoRequests[serverCell]: 22029
-28 port: 6834
-27 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-27idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 22 work: 5967 totalWorkOfTwoRequests[serverCell]: 15789
-27 port: 6835
-26 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-26idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 2 work: 596 totalWorkOfTwoRequests[serverCell]: 9822
-29 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-29idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 5 work: 5774 totalWorkOfTwoRequests[serverCell]: 16559
-29 port: 6834
-23 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-23idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 9 work: 8940 totalWorkOfTwoRequests[serverCell]: 10785
-26 port: 6835
-25 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-25idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) < 0.1) tokens assigned: 1 work: 192 totalWorkOfTwoRequests[serverCell]: 9226
-23 port: 6834
-24 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-24idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 35 work: 9034 totalWorkOfTwoRequests[serverCell]: 9034
-25 port: 6835
-22 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-22idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 2 work: 1845 totalWorkOfTwoRequests[serverCell]: 1845
-30 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-30idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 17 work: 4196 totalWorkOfTwoRequests[serverCell]: 12332
-32 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-32idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 20 work: 4931 totalWorkOfTwoRequests[serverCell]: 8136
-24 port: 6835
-30 port: 6836
-32 port: 6836
-35 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-35idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 6 work: 1752 totalWorkOfTwoRequests[serverCell]: 13321
-22 port: 6834
-35 port: 6837
-36 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-36idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 31 work: 7870 totalWorkOfTwoRequests[serverCell]: 11569
-36 port: 6837
+31 in while in waitIfNecessary packetsCounter[serverCell]: 4
 33 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-33idOfServer: 4 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 16 work: 3699 totalWorkOfTwoRequests[serverCell]: 3699
-33 port: 6837
+33idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 14 work: 3676 totalWorkOfTwoRequests[serverCell]: 17075
+22 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+22idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 8 work: 2602 totalWorkOfTwoRequests[serverCell]: 21048
+22 port: 6834
+33 port: 6836
+26 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+26idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 22 work: 6838 totalWorkOfTwoRequests[serverCell]: 20360
+26 port: 6835
+27 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+27idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 3 work: 1077 totalWorkOfTwoRequests[serverCell]: 13522
+27 port: 6835
+28 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+28idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 13 work: 4072 totalWorkOfTwoRequests[serverCell]: 12445
+28 port: 6835
+32 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+32idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 6 work: 1580 totalWorkOfTwoRequests[serverCell]: 13399
+32 port: 6836
+30 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+30idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 27 work: 7135 totalWorkOfTwoRequests[serverCell]: 11819
+30 port: 6836
+24 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+24idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 13 work: 4362 totalWorkOfTwoRequests[serverCell]: 18446
+24 port: 6834
 31 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
-31idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 14 work: 3205 totalWorkOfTwoRequests[serverCell]: 3205
+31idOfServer: 3 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 19 work: 4684 totalWorkOfTwoRequests[serverCell]: 4684
 31 port: 6836
+23 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+23idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 23 work: 7390 totalWorkOfTwoRequests[serverCell]: 14084
+23 port: 6834
+25 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+25idOfServer: 1 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 22 work: 6694 totalWorkOfTwoRequests[serverCell]: 6694
+29 timesOfArrivalOfPackets[serverCell]: 4596 timeOfArrivalOfThisPacket: 4596
+29idOfServer: 2 in if ((work / (double) totalWorkOfTwoRequests) >= 0.1) tokens assigned: 28 work: 8373 totalWorkOfTwoRequests[serverCell]: 8373
+29 port: 6835
+25 port: 6834
