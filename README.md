@@ -1,1 +1,1 @@
-containerInstallingAndRemoving is the branch with final version
+containerInstallingANDRemoving is the branch with final version
